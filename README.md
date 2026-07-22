@@ -15,8 +15,8 @@ Base para crear tu propio bot de WhatsApp usando [Baileys](https://github.com/Wh
 ## Instalación
 
 ```bash
-git clone https://github.com/TU-USUARIO/TU-REPO.git
-cd TU-REPO
+git clone https://github.com/AmilcarGit/BaseBot.git
+cd BaseBot
 npm install
 npm start
 ```
