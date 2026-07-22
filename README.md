@@ -2,6 +2,8 @@
 
 # 🤖 WhatsApp Bot Base
 
+<a href='https://postimg.cc/8f5kVGLY' target='_blank'><img src='https://i.postimg.cc/T1jKgY1T/file-00000000f360820e974245001aca7e87.png' border='0' alt='file-00000000f360820e974245001aca7e87'></a>
+
 **Plantilla base para crear tu propio bot de WhatsApp**, construida sobre [Baileys](https://github.com/WhiskeySockets/Baileys), con vinculación mediante **código de emparejamiento** (sin escanear QR).
 
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933?logo=node.js&logoColor=white)
