@@ -29,6 +29,19 @@ async function iniciar() {
   )
   const { version } = await fetchLatestBaileysVersion()
 
+  // Pedimos el número ANTES de abrir el socket. Si se pide después de
+  // 'connecting', la espera por la respuesta del usuario hace que
+  // WhatsApp cierre la conexión por timeout (errores 408/428).
+  let numero = config.numeroBot
+  if (!state.creds.registered && !numero) {
+    numero = await preguntar(
+      chalk.green(
+        'Ingresa el número de WhatsApp del bot (con código de país, sin +): '
+      )
+    )
+  }
+  if (numero) numero = numero.replace(/\D/g, '')
+
   const sock = makeWASocket({
     version,
     logger,
@@ -41,24 +54,19 @@ async function iniciar() {
   })
 
   // --- Solicitud del código de vinculación ---
-  // Se dispara cuando Baileys emite el evento con el QR pendiente,
-  // que es el momento en que el socket ya está listo para generar el código.
+  // Se dispara apenas el socket empieza a conectar, ya con el número
+  // en mano, para no perder la ventana de tiempo que da WhatsApp.
   sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update
+    const { connection, lastDisconnect } = update
 
-    if (qr && !sock.authState.creds.registered && !codigoSolicitado) {
+    if (
+      connection === 'connecting' &&
+      !sock.authState.creds.registered &&
+      !codigoSolicitado &&
+      numero
+    ) {
       codigoSolicitado = true
       await delay(1500)
-
-      let numero = config.numeroBot
-      if (!numero) {
-        numero = await preguntar(
-          chalk.green(
-            'Ingresa el número de WhatsApp del bot (con código de país, sin +): '
-          )
-        )
-      }
-      numero = numero.replace(/\D/g, '')
 
       try {
         const codigo = await sock.requestPairingCode(numero)
