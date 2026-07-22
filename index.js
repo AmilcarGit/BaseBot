@@ -1,4 +1,9 @@
-import baileysPkg from '@whiskeysockets/baileys'
+import makeWASocket, {
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  DisconnectReason,
+  makeCacheableSignalKeyStore,
+} from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -6,14 +11,6 @@ import readline from 'readline'
 import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
-
-const {
-  default: makeWASocket,
-  useMultiFileAuthState,
-  fetchLatestBaileysVersion,
-  DisconnectReason,
-  makeCacheableSignalKeyStore,
-} = baileysPkg
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
