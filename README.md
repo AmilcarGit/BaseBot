@@ -54,8 +54,9 @@
 ## 🚀 Instalación rápida
 
 ```bash
-git clone https://github.com/TU-USUARIO/TU-REPO.git
-cd TU-REPO
+git clone https://github.com/AmilcarGit/BaseBot.git
+cd BaseBot
+git pull
 npm install
 npm start
 ```
