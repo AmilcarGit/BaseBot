@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
+import chalk from 'chalk'
 import config from './config.js'
 import { esOwner, normalizarJid } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
@@ -89,6 +90,15 @@ export default async function handler(sock, m) {
     msg.message.imageMessage?.caption ||
     ''
 
+  // Log de todo mensaje entrante (aunque no sea comando), útil para depurar.
+  const tipoMensaje = Object.keys(msg.message)[0]
+  const esGrupo = chatId.endsWith('@g.us')
+  console.log(
+    chalk.cyan(esGrupo ? '👥 Grupo' : '👤 Privado'),
+    chalk.gray(`${jidRemitente.split('@')[0]}:`),
+    texto || chalk.dim(`[${tipoMensaje}]`)
+  )
+
   if (!texto.startsWith(config.prefijo)) return
 
   const [comandoRaw, ...args] = texto
@@ -133,6 +143,11 @@ export default async function handler(sock, m) {
 
   try {
     const db = await getDB()
+    console.log(
+      chalk.green('⚡ Comando:'),
+      `${config.prefijo}${entrada.nombre}`,
+      chalk.gray(`(${jidRemitente.split('@')[0]})`)
+    )
     await entrada.run({
       sock,
       msg,
