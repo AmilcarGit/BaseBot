@@ -19,6 +19,9 @@ export default {
   // Carpeta donde se guardará la sesión
   sessionFolder: './session',
 
+  // Archivo donde se guarda la base de datos local (usuarios, chats, etc.)
+  dbFile: './database.json',
+
   // Tiempo de vida del caché de metadata de grupos (ms)
   groupCacheTTL: 60 * 1000,
 
