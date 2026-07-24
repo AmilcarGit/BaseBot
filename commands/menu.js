@@ -11,21 +11,18 @@ export default async function menu({ sock, chatId, comandos, config }) {
   const lista = comandos
     .map((c) => {
       const alias = c.alias.length
-        ? ` (${c.alias.map((a) => config.prefijo + a).join(', ')})`
+        ? ` _(${c.alias.map((a) => config.prefijo + a).join(', ')})_`
         : ''
-      return `▢ ${config.prefijo}${c.nombre}${alias} — ${c.desc}`
+      return `▢ *${config.prefijo}${c.nombre}*${alias}\n   ${c.desc}`
     })
-    .join('\n')
+    .join('\n\n')
 
-  const texto = `╔══〔 ${config.nombreBot} 〕══╗
-║ 🕐 ${fecha}
-║ 
-${lista
-  .split('\n')
-  .map((linea) => `║ ${linea}`)
-  .join('\n')}
-║ 
-╚══════════════════╝`
+  const texto = `🤖 *${config.nombreBot}*
+🕐 ${fecha}
+
+📜 *Comandos disponibles*
+
+${lista}`
 
   await sock.sendMessage(chatId, { text: texto })
 }
