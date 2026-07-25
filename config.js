@@ -10,7 +10,7 @@ export default {
   prefijo: '.',
 
   // Número del owner/dueño del bot (con código de país, sin +, sin espacios)
-  owner: ['51910227479'],
+  owner: ['51900000000'],
 
   // Número que se usará para vincular el bot vía código de emparejamiento.
   // Déjalo vacío ('') para que el bot lo pida por consola al iniciar.
@@ -31,4 +31,12 @@ export default {
   // Reintentos máximos de reconexión y tope de espera
   maxReconnectAttempts: 8,
   maxReconnectDelay: 5 * 60 * 1000,
+
+  // Bienvenida y despedida automática en grupos.
+  // Usa {mention} para etiquetar al usuario y {grupo} para el nombre del grupo.
+  bienvenida: {
+    activa: true,
+    mensajeEntrada: '👋 ¡Bienvenido/a {mention} a *{grupo}*!\nLee las reglas y disfruta tu estadía 🎉',
+    mensajeSalida: '😢 {mention} salió de *{grupo}*. ¡Hasta pronto!',
+  },
 }
