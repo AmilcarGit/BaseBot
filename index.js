@@ -11,6 +11,7 @@ import readline from 'readline'
 import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
+import { info, warn, error as logError } from './lib/logger.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
@@ -70,14 +71,14 @@ async function iniciar() {
 
       try {
         const codigo = await sock.requestPairingCode(numero)
-        console.log(
+        info(
           chalk.yellow('\n============================='),
           chalk.cyan(`\nTu código de vinculación es: ${codigo}`),
           chalk.yellow('\n=============================\n'),
           '\nAbre WhatsApp > Dispositivos vinculados > Vincular con número de teléfono, e ingresa el código.'
         )
       } catch (err) {
-        console.error(chalk.red('Error al solicitar el código de vinculación:'), err)
+        logError(chalk.red('Error al solicitar el código de vinculación:'), err)
         codigoSolicitado = false
       }
     }
@@ -85,7 +86,7 @@ async function iniciar() {
     if (connection === 'open') {
       intentosReconexion = 0
       codigoSolicitado = false
-      console.log(chalk.green(`✔ ${config.nombreBot} conectado correctamente.`))
+      info(chalk.green(`✔ ${config.nombreBot} conectado correctamente.`))
     }
 
     if (connection === 'close') {
@@ -93,7 +94,7 @@ async function iniciar() {
       const isLoggedOut = statusCode === DisconnectReason.loggedOut
 
       if (isLoggedOut) {
-        console.log(
+        logError(
           chalk.red(
             'Sesión cerrada desde el teléfono. Elimina la carpeta de sesión y vuelve a vincular.'
           )
@@ -105,7 +106,7 @@ async function iniciar() {
       if (intentosReconexion < config.maxReconnectAttempts) {
         const espera = backoffDelay(intentosReconexion, config.maxReconnectDelay)
         intentosReconexion++
-        console.log(
+        warn(
           chalk.yellow(
             `Conexión cerrada (${statusCode}). Reintentando en ${Math.round(
               espera / 1000
@@ -115,7 +116,7 @@ async function iniciar() {
         await delay(espera)
         iniciar()
       } else {
-        console.log(
+        logError(
           chalk.red('Se alcanzó el máximo de reintentos de reconexión. Deteniendo el bot.')
         )
       }
@@ -130,15 +131,45 @@ async function iniciar() {
     } catch (err) {
       // Manejo básico de rate limit (429): pausa antes de continuar
       if (err?.output?.statusCode === 429 || err?.status === 429) {
-        console.log(
+        warn(
           chalk.yellow(
             `Rate limit detectado. Pausando ${config.rateLimitPause / 1000}s...`
           )
         )
         await delay(config.rateLimitPause)
       } else {
-        console.error('Error procesando mensaje:', err)
+        logError('Error procesando mensaje:', err)
       }
+    }
+  })
+
+  // --- Bienvenida / despedida automática de grupos ---
+  sock.ev.on('group-participants.update', async (update) => {
+    if (!config.bienvenida?.activa) return
+
+    try {
+      const { id: chatId, participants, action } = update
+      const metadata = await sock.groupMetadata(chatId)
+      const nombreGrupo = metadata.subject
+
+      for (const jid of participants) {
+        const plantilla =
+          action === 'add'
+            ? config.bienvenida.mensajeEntrada
+            : action === 'remove'
+              ? config.bienvenida.mensajeSalida
+              : null
+
+        if (!plantilla) continue
+
+        const texto = plantilla
+          .replace('{mention}', `@${jid.split('@')[0]}`)
+          .replace('{grupo}', nombreGrupo)
+
+        await sock.sendMessage(chatId, { text: texto, mentions: [jid] })
+      }
+    } catch (err) {
+      logError('Error en bienvenida/despedida:', err)
     }
   })
 
