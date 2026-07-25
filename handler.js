@@ -6,6 +6,7 @@ import config from './config.js'
 import { esOwner, normalizarJid } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
+import { info, error as logError } from './lib/logger.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const commandsDir = path.join(__dirname, 'commands')
@@ -49,7 +50,7 @@ async function cargarComandos() {
     listaComandos.push(entrada)
   }
 
-  console.log(`✔ ${listaComandos.length} comandos cargados desde /commands`)
+  info(chalk.green(`✔ ${listaComandos.length} comandos cargados desde /commands`))
 }
 
 await cargarComandos()
@@ -81,7 +82,7 @@ export default async function handler(sock, m) {
     db.data.users[jidNormalizado].mensajes++
     await db.write()
   } catch (err) {
-    console.error('Error guardando en la base de datos:', err)
+    logError('Error guardando en la base de datos:', err)
   }
 
   const texto =
@@ -93,7 +94,7 @@ export default async function handler(sock, m) {
   // Log de todo mensaje entrante (aunque no sea comando), útil para depurar.
   const tipoMensaje = Object.keys(msg.message)[0]
   const esGrupo = chatId.endsWith('@g.us')
-  console.log(
+  info(
     chalk.cyan(esGrupo ? '👥 Grupo' : '👤 Privado'),
     chalk.gray(`${jidRemitente.split('@')[0]}:`),
     texto || chalk.dim(`[${tipoMensaje}]`)
@@ -143,11 +144,18 @@ export default async function handler(sock, m) {
 
   try {
     const db = await getDB()
-    console.log(
+
+    // Contador global de comandos ejecutados, usado por .stats
+    db.data.stats ??= { comandosEjecutados: 0 }
+    db.data.stats.comandosEjecutados++
+    await db.write()
+
+    info(
       chalk.green('⚡ Comando:'),
       `${config.prefijo}${entrada.nombre}`,
       chalk.gray(`(${jidRemitente.split('@')[0]})`)
     )
+
     await entrada.run({
       sock,
       msg,
@@ -159,7 +167,7 @@ export default async function handler(sock, m) {
       db,
     })
   } catch (err) {
-    console.error(`Error en el comando "${entrada.nombre}":`, err)
+    logError(`Error en el comando "${entrada.nombre}":`, err)
     await notificarErrorAlOwner(sock, err, entrada.nombre)
   }
 }
