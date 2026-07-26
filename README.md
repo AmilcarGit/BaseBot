@@ -10,6 +10,7 @@
 **Plantilla base para crear tu propio bot de WhatsApp**, construida sobre [Baileys](https://github.com/WhiskeySockets/Baileys), con vinculación mediante **código de emparejamiento** (sin escanear QR).
 
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933?logo=node.js&logoColor=white)
+![npm](https://img.shields.io/badge/npm-%3E%3D10-CB3837?logo=npm&logoColor=white)
 ![Baileys](https://img.shields.io/badge/Baileys-6.7.x-25D366?logo=whatsapp&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -20,15 +21,18 @@
 ## 📋 Índice
 
 - [Características](#-características)
+- [¿Por qué esta base?](#-por-qué-esta-base)
 - [Requisitos](#-requisitos)
 - [Instalación rápida](#-instalación-rápida)
 - [Estructura del proyecto](#-estructura-del-proyecto)
 - [Configuración](#-configuración)
 - [Comandos incluidos](#-comandos-incluidos)
 - [Cómo agregar un comando nuevo](#-cómo-agregar-un-comando-nuevo)
+- [Ejemplos prácticos](#-ejemplos-prácticos)
 - [Buenas prácticas para tus comandos](#-buenas-prácticas-para-tus-comandos)
 - [Despliegue](#-despliegue)
 - [Problemas comunes](#-problemas-comunes)
+- [Soporte](#-soporte)
 - [Licencia](#-licencia)
 
 ---
@@ -48,11 +52,24 @@
 
 ---
 
+## 🎯 ¿Por qué esta base?
+
+Hay muchas plantillas de bots de WhatsApp, pero **BaseBot** destaca por:
+
+✅ **Sin dependencias pesadas innecesarias** — solo Baileys y lo esencial  
+✅ **Estructura clara y escalable** — agregar comandos es literal copiar-pegar  
+✅ **Listo para producción** — incluye manejo de errores, reconexión y caché  
+✅ **Funciona en cualquier lugar** — VPS, Termux, computadora local  
+✅ **Documentación completa** — cada sección está bien explicada  
+✅ **Mantenido activamente** — recibe actualizaciones junto con Baileys
+
+---
+
 ## ✅ Requisitos
 
 - Node.js **20 o superior**
+- npm **10 o superior**
 - Un número de WhatsApp para vincular el bot (puede ser distinto al tuyo personal)
-- npm
 
 ---
 
@@ -81,16 +98,16 @@ Una vez vinculado, la sesión queda guardada en `session/` y no se te volverá a
 ```
 .
 ├── index.js              # Conexión a Baileys: vinculación, reconexión, eventos
-├── handler.js             # Enrutador de mensajes → despacha al comando correcto
-├── config.js               # Configuración global del bot
+├── handler.js            # Enrutador de mensajes → despacha al comando correcto
+├── config.js             # Configuración global del bot
 ├── package.json
 ├── commands/
-│   ├── menu.js               # Menú que lista los comandos automáticamente
-│   └── ping.js                # Comando de ejemplo (latencia)
+│   ├── menu.js           # Menú que lista los comandos automáticamente
+│   └── ping.js           # Comando de ejemplo (latencia)
 ├── lib/
-│   ├── utils.js                 # normalizarJid, esOwner, delay, backoff
-│   └── groupCache.js             # Caché de metadata de grupos con TTL
-└── session/                        # Credenciales de sesión (se genera solo, no subir a git)
+│   ├── utils.js          # normalizarJid, esOwner, delay, backoff
+│   └── groupCache.js     # Caché de metadata de grupos con TTL
+└── session/              # Credenciales de sesión (se genera solo, no subir a git)
 ```
 
 ---
@@ -99,17 +116,17 @@ Una vez vinculado, la sesión queda guardada en `session/` y no se te volverá a
 
 Todo se controla desde `config.js`:
 
-| Clave | Descripción |
-|---|---|
-| `nombreBot` | Nombre mostrado en el menú y logs |
-| `prefijo` | Prefijo de comandos (ej. `.`, `!`, o `''` para ninguno) |
-| `owner` | Array de números con permisos de dueño (código de país, sin `+`) |
-| `numeroBot` | Número para vincular el bot. Vacío = se pide por consola al iniciar |
-| `sessionFolder` | Carpeta donde se guarda la sesión |
-| `groupCacheTTL` | Tiempo de vida del caché de metadata de grupos (ms) |
-| `rateLimitPause` | Pausa aplicada cuando WhatsApp responde `429` (ms) |
-| `maxReconnectAttempts` | Intentos máximos de reconexión |
-| `maxReconnectDelay` | Tope de espera entre reintentos (ms) |
+| Clave | Descripción | Ejemplo |
+|---|---|---|
+| `nombreBot` | Nombre mostrado en el menú y logs | `"Mi Bot"` |
+| `prefijo` | Prefijo de comandos | `.`, `!`, o `''` |
+| `owner` | Array de números con permisos de dueño | `['5491234567890']` |
+| `numeroBot` | Número para vincular. Vacío = se pide por consola | `''` |
+| `sessionFolder` | Carpeta donde se guarda la sesión | `'./session'` |
+| `groupCacheTTL` | TTL del caché de grupos (ms) | `300000` |
+| `rateLimitPause` | Pausa ante error `429` (ms) | `3000` |
+| `maxReconnectAttempts` | Intentos máximos de reconexión | `8` |
+| `maxReconnectDelay` | Tope de espera entre reintentos (ms) | `300000` |
 
 ---
 
@@ -136,15 +153,15 @@ Cada comando recibe un solo objeto con:
 
 | Propiedad | Tipo | Descripción |
 |---|---|---|
-| `sock` | `WASocket` | La instancia activa de Baileys, para enviar mensajes, medios, etc. |
+| `sock` | `WASocket` | La instancia activa de Baileys |
 | `msg` | `object` | El mensaje original completo |
-| `args` | `string[]` | Palabras después del comando (`.hola juan mario` → `['juan', 'mario']`) |
+| `args` | `string[]` | Palabras después del comando |
 | `chatId` | `string` | JID del chat donde responder |
-| `esDueno` | `boolean` | `true` si quien escribió es un owner definido en `config.js` |
-| `comandos` | `object` | El registro completo de comandos (útil para `.menu` o ayuda dinámica) |
-| `config` | `object` | La configuración global del bot |
+| `esDueno` | `boolean` | `true` si es un owner |
+| `comandos` | `object` | Registro completo de comandos |
+| `config` | `object` | Configuración global del bot |
 
-**Paso 2 — Regístralo en `handler.js`**, con una descripción corta que se usará automáticamente en `.menu`:
+**Paso 2 — Regístralo en `handler.js`**, con una descripción:
 
 ```js
 import hola from './commands/hola.js'
@@ -156,14 +173,18 @@ const comandos = {
 }
 ```
 
-Eso es todo — no necesitas tocar `commands/menu.js`: recorre el objeto `comandos` y arma la lista solo.
+Eso es todo — `.menu` se actualiza automáticamente.
 
-### Ejemplo con argumentos y validación de owner
+---
+
+## 📚 Ejemplos prácticos
+
+### Ejemplo 1: Comando con argumentos y validación de owner
 
 ```js
 export default async function ban({ sock, chatId, args, esDueno }) {
   if (!esDueno) {
-    return sock.sendMessage(chatId, { text: '⛔ Solo el owner puede usar este comando.' })
+    return sock.sendMessage(chatId, { text: '⛔ Solo el owner puede usar esto.' })
   }
 
   const numero = args[0]
@@ -171,8 +192,45 @@ export default async function ban({ sock, chatId, args, esDueno }) {
     return sock.sendMessage(chatId, { text: '📌 Uso: .ban 519XXXXXXXX' })
   }
 
-  // tu lógica aquí...
   await sock.sendMessage(chatId, { text: `✅ ${numero} procesado.` })
+}
+```
+
+### Ejemplo 2: Comando que consume una API
+
+```js
+export default async function clima({ sock, chatId, args }) {
+  const ciudad = args.join(' ')
+  
+  if (!ciudad) {
+    return sock.sendMessage(chatId, { text: '🌍 Uso: .clima Buenos Aires' })
+  }
+
+  try {
+    const res = await fetch(`https://api.ejemplo.com/clima?q=${ciudad}`)
+    const data = await res.json()
+    
+    await sock.sendMessage(chatId, { 
+      text: `🌤️ ${data.ciudad}\n📊 Temp: ${data.temp}°C` 
+    })
+  } catch (error) {
+    await sock.sendMessage(chatId, { text: '❌ Error al obtener datos.' })
+  }
+}
+```
+
+### Ejemplo 3: Comando que envía una imagen
+
+```js
+export default async function foto({ sock, chatId }) {
+  try {
+    await sock.sendMessage(chatId, {
+      image: { url: 'https://ejemplo.com/imagen.jpg' },
+      caption: '📸 Aquí está tu imagen'
+    })
+  } catch (err) {
+    await sock.sendMessage(chatId, { text: '❌ Error al enviar imagen.' })
+  }
 }
 ```
 
@@ -180,38 +238,76 @@ export default async function ban({ sock, chatId, args, esDueno }) {
 
 ## 🧠 Buenas prácticas para tus comandos
 
-- Mantén cada comando en su **propio archivo** — facilita el mantenimiento y evita conflictos al fusionar cambios de Git.
-- Valida `esDueno` para cualquier acción sensible (banear, apagar el bot, configurar cosas globales).
-- Usa `try/catch` dentro de comandos que llamen APIs externas, para que un error no tumbe el proceso.
-- Si tu comando necesita datos de grupo, usa `getGroupMetadataCached` de `lib/groupCache.js` en vez de `sock.groupMetadata()` directo, para no saturar la API.
-- Evita `sharp` si vas a correr el bot en Termux/Android — usa `jimp` (ya incluido en las dependencias).
+- Mantén cada comando en su **propio archivo** — facilita el mantenimiento.
+- Valida `esDueno` para acciones sensibles (ban, apagar, etc).
+- Usa `try/catch` en comandos que llamen APIs externas.
+- Para datos de grupo, usa `getGroupMetadataCached` de `lib/groupCache.js` en lugar de `sock.groupMetadata()`.
+- Evita `sharp` en Termux/Android — usa `jimp` en su lugar.
+- Siempre retorna tras enviar un mensaje de error.
+- Sanitiza inputs de usuarios antes de usarlos.
 
 ---
 
 ## ☁️ Despliegue
 
-Esta base funciona igual en:
+### VPS (Ubuntu/Debian)
 
-- **VPS** (Ubuntu/Debian) — recomendado `pm2` para mantener el proceso vivo:
-  ```bash
-  npm install -g pm2
-  pm2 start index.js --name mi-bot
-  pm2 save
-  ```
-- **Termux (Android)** — funciona directo con `npm start`; considera `termux-wake-lock` para evitar que el sistema mate el proceso.
+Con `pm2` para mantener el proceso vivo:
+
+```bash
+npm install -g pm2
+pm2 start index.js --name BaseBot
+pm2 save
+pm2 startup
+```
+
+Ver logs:
+```bash
+pm2 logs BaseBot
+```
+
+### Termux (Android)
+
+Funciona directo:
+
+```bash
+npm start
+```
+
+Con `termux-wake-lock` para mantener activo:
+```bash
+termux-wake-lock
+npm start
+```
 
 ---
 
 ## 🛠️ Problemas comunes
 
-| Problema | Causa probable | Solución |
+| Problema | Causa | Solución |
 |---|---|---|
-| `useMultiFileAuthState is not a function` | Import mal formado tras actualizar Baileys | Usa `import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys'` |
-| Error `408`/`428` al pedir el código | El número se pidió después de abrir la conexión y WhatsApp cerró por timeout | Define `numeroBot` en `config.js` para no depender de la entrada por consola |
-| `ERESOLVE` con `jimp` | Versión de `jimp` desactualizada frente a la que pide Baileys | Usa `jimp@^1.6.0` en `package.json` |
+| `useMultiFileAuthState is not a function` | Import mal en Baileys | Usa `import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys'` |
+| Error `408`/`428` | Timeout al pedir código | Define `numeroBot` en `config.js` |
+| `ERESOLVE` con `jimp` | Versión desactualizada | Usa `jimp@^1.6.0` |
+| Bot no se reconecta | Event handler no configurado | Revisa `index.js` |
+| Mensajes no se envían a grupos | Sin permisos o removido del grupo | Verifica que esté en el grupo |
+| "Rate limit exceeded" | Demasiados mensajes rápido | Aumenta `rateLimitPause` o usa delays |
+
+---
+
+## 💬 Soporte
+
+¿Problemas o dudas?
+
+- 🐛 **[Abre un issue](https://github.com/AmilcarGit/BaseBot/issues)** con detalles del problema
+- 💡 **[Sugerencias](https://github.com/AmilcarGit/BaseBot/discussions)** — usa Discussions
+- ⭐ Si te fue útil, **dale una estrella** al repo
+- 📖 Consulta la [documentación de Baileys](https://github.com/WhiskeySockets/Baileys)
 
 ---
 
 ## 📄 Licencia
 
 MIT — úsalo, modifícalo y publica tu propio bot libremente.
+
+Hecho con ❤️ por [AmilcarGit](https://github.com/AmilcarGit)
