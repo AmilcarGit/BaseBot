@@ -1,5 +1,8 @@
 <div align="center">
 
+![GitHub stars](https://img.shields.io/github/stars/AmilcarGit/BaseBot?style=social)
+![GitHub forks](https://img.shields.io/github/forks/AmilcarGit/BaseBot?style=social)
+
 # 🤖 WhatsApp Bot Base
 
 <a href='https://postimg.cc/CBKpRN5t' target='_blank'><img src='https://i.postimg.cc/HxwYPvgp/file-00000000e520820e93edc45acabd1530.png' border='0' alt='file-00000000e520820e93edc45acabd1530'></a>
