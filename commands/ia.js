@@ -5,7 +5,7 @@ export const alias = ['amilcar', 'ai']
 export const cooldown = 5
 
 const ia = new AmilcarAI({
-  mode: process.env.AMILCAR_AI_MODE || 'local',
+  mode: process.env.AMILCAR_AI_MODE || 'hybrid',
   baseURL: process.env.AMILCAR_AI_URL || 'http://127.0.0.1:8000',
   timeout: 45000,
   maxMessageLength: 2000,
@@ -26,7 +26,7 @@ export default async function amilcarAI({ sock, chatId, args }) {
 
   try {
     const resultado = await ia.chat(pregunta)
-    const aviso = resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
+    const aviso = resultado.mode === 'hybrid' || resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
     const respuesta = `🤖 *AMILCAR AI*\n\n${resultado.reply.trim() || 'No se recibió una respuesta con texto.'}${aviso}\n\n_🧠 Modelo: ${resultado.model}_`
     await sock.sendMessage(chatId, { text: respuesta })
   } catch (err) {
