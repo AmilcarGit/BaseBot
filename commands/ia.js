@@ -27,7 +27,7 @@ export default async function amilcarAI({ sock, chatId, args }) {
 
   try {
     const resultado = await ia.chat(pregunta)
-    const aviso = resultado.mode === 'hybrid' || resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
+    const aviso = resultado.mode === 'cloud' || resultado.mode === 'hybrid' || resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
     const respuesta = `🤖 *AMILCAR AI*\n\n${resultado.reply.trim() || 'No se recibió una respuesta con texto.'}${aviso}\n\n_🧠 Modelo: ${resultado.model}_`
     await sock.sendMessage(chatId, { text: respuesta })
   } catch (err) {
