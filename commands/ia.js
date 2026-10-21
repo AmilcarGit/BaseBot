@@ -5,6 +5,7 @@ export const alias = ['amilcar', 'ai']
 export const cooldown = 5
 
 const ia = new AmilcarAI({
+  mode: process.env.AMILCAR_AI_MODE || 'api',
   baseURL: process.env.AMILCAR_AI_URL || 'http://127.0.0.1:8000',
   timeout: 45000,
   maxMessageLength: 2000,
