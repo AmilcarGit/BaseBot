@@ -5,7 +5,7 @@ export const alias = ['amilcar', 'ai']
 export const cooldown = 5
 
 const ia = new AmilcarAI({
-  mode: process.env.AMILCAR_AI_MODE || 'api',
+  mode: process.env.AMILCAR_AI_MODE || 'local',
   baseURL: process.env.AMILCAR_AI_URL || 'http://127.0.0.1:8000',
   timeout: 45000,
   maxMessageLength: 2000,
@@ -34,7 +34,9 @@ export default async function amilcarAI({ sock, chatId, args }) {
       ? 'El modelo AMI-Base todavía no está entrenado. Entrénalo e inicia nuevamente la API.'
       : err?.code === 'TIMEOUT'
         ? 'La IA tardó demasiado en responder. Inténtalo otra vez.'
-        : 'No pude conectar con AMILCAR AI. Comprueba que la API esté encendida y que AMILCAR_AI_URL apunte a su dirección.'
+        : err?.code === 'MODEL_NOT_FOUND' || err?.code === 'LOCAL_START_FAILED' || err?.code === 'PYTHON_START_FAILED'
+        ? 'El motor local no está preparado. AMILCAR AI necesita Python, sus dependencias y un checkpoint AMI entrenado. Revisa la guía del repositorio.'
+        : 'No pude iniciar AMILCAR AI en modo local. Comprueba Python, las dependencias y la ruta del modelo. Para usar el servidor opcional, configura AMILCAR_AI_MODE=api y AMILCAR_AI_URL.'
 
     await sock.sendMessage(chatId, {
       text: `⚠️ *AMILCAR AI no está disponible*\n\n${mensaje}`,
