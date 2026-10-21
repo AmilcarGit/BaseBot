@@ -6,7 +6,7 @@ export const cooldown = 5
 
 const ia = new AmilcarAI({
   mode: process.env.AMILCAR_AI_MODE || 'cloud',
-  baseURL: process.env.AMILCAR_AI_URL || 'https://openrouter.ai/api/v1',
+  baseURL: process.env.AMILCAR_AI_URL || (process.env.AMILCAR_AI_MODE === 'api' ? 'http://127.0.0.1:8000' : 'https://openrouter.ai/api/v1'),
   model: process.env.AMILCAR_AI_MODEL || 'openrouter/free',
   timeout: Number(process.env.AMILCAR_AI_TIMEOUT || 120000),
   maxMessageLength: 2000,
