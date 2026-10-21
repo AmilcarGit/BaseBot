@@ -26,7 +26,7 @@ export default async function amilcarAI({ sock, chatId, args }) {
 
   try {
     const resultado = await ia.chat(pregunta)
-    const aviso = resultado.source === 'knowledge' ? '\n\n_Respuesta de la base local de AMI Nano._' : resultado.trained ? '' : '\n\n_Nota: el modelo neuronal aún no está entrenado; respuesta local de respaldo._'
+    const aviso = resultado.source === 'knowledge' ? '' : resultado.trained ? '' : '\n\n_Nota: el modelo neuronal aún no está entrenado; esta es una respuesta local de respaldo._'
     const respuesta = `🤖 *AMILCAR AI*\n\n${resultado.reply.trim() || 'No se recibió una respuesta con texto.'}${aviso}\n\n_🧠 Modelo: ${resultado.model}_`
     await sock.sendMessage(chatId, { text: respuesta })
   } catch (err) {
