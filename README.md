@@ -322,7 +322,7 @@ npm start
 ¿Problemas o dudas?
 
 - 🐛 **[Abre un issue](https://github.com/AmilcarGit/BaseBot/issues)** con detalles del problema
-- 💡 **[Sugerencias](https://github.com/AmilcarGit/BaseBot/discussions)** — usa Discussions
+- 💡 **[Sugerencias](https://github.com/AmilcarGit/BaseBot/issues)** — usa Discussions
 - ⭐ Si te fue útil, **dale una estrella** al repo
 - 📖 Consulta la [documentación de Baileys](https://github.com/WhiskeySockets/Baileys)
 
