@@ -1,12 +1,17 @@
 import { AmilcarAI, AmilcarAIError } from 'amilcar-ai'
+import { chatNativo } from '../lib/autoreply.js'
 
 export const desc = 'Chatea con AMILCAR AI'
 export const alias = ['amilcar', 'ai']
 export const cooldown = 5
 
-const ia = new AmilcarAI({
-  mode: process.env.AMILCAR_AI_MODE || 'cloud',
-  baseURL: process.env.AMILCAR_AI_URL || (process.env.AMILCAR_AI_MODE === 'api' ? 'http://127.0.0.1:8000' : 'https://openrouter.ai/api/v1'),
+// Por defecto usa el motor nativo (local, sin API ni Python). Para otro modo define AMILCAR_AI_MODE
+// (cloud, api, local o hybrid).
+const modo = process.env.AMILCAR_AI_MODE || 'native'
+
+const ia = modo === 'native' ? null : new AmilcarAI({
+  mode: modo,
+  baseURL: process.env.AMILCAR_AI_URL || (modo === 'api' ? 'http://127.0.0.1:8000' : 'https://openrouter.ai/api/v1'),
   model: process.env.AMILCAR_AI_MODEL || 'openrouter/free',
   timeout: Number(process.env.AMILCAR_AI_TIMEOUT || 120000),
   maxMessageLength: 2000,
@@ -21,13 +26,15 @@ export default async function amilcarAI({ sock, chatId, args }) {
     })
   }
 
-  await sock.sendMessage(chatId, {
-    text: '🧠 AMILCAR AI está pensando...',
-  })
+  if (ia) {
+    await sock.sendMessage(chatId, {
+      text: '🧠 AMILCAR AI está pensando...',
+    })
+  }
 
   try {
-    const resultado = await ia.chat(pregunta)
-    const aviso = resultado.mode === 'cloud' || resultado.mode === 'hybrid' || resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
+    const resultado = ia ? await ia.chat(pregunta) : await chatNativo(chatId, pregunta)
+    const aviso = resultado.mode === 'native' || resultado.mode === 'cloud' || resultado.mode === 'hybrid' || resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
     const respuesta = `🤖 *AMILCAR AI*\n\n${resultado.reply.trim() || 'No se recibió una respuesta con texto.'}${aviso}\n\n_🧠 Modelo: ${resultado.model}_`
     await sock.sendMessage(chatId, { text: respuesta })
   } catch (err) {

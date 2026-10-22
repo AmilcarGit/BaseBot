@@ -7,6 +7,7 @@ import { esOwner, normalizarJid } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
 import { info, error as logError } from './lib/logger.js'
+import { autoResponder } from './lib/autoreply.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const commandsDir = path.join(__dirname, 'commands')
@@ -100,7 +101,11 @@ export default async function handler(sock, m) {
     texto || chalk.dim(`[${tipoMensaje}]`)
   )
 
-  if (!texto.startsWith(config.prefijo)) return
+  if (!texto.startsWith(config.prefijo)) {
+    // Mensaje normal (no es comando): AMILCAR AI responde si la respuesta automática está activa.
+    await autoResponder({ sock, msg, chatId, jidRemitente })
+    return
+  }
 
   const [comandoRaw, ...args] = texto
     .slice(config.prefijo.length)

@@ -136,6 +136,28 @@ Todo se controla desde `config.js`:
 |---|---|
 | `.menu` | Muestra la lista de comandos disponibles |
 | `.ping` | Muestra la latencia del bot |
+| `.ia <pregunta>` | Chatea con AMILCAR AI (motor local por defecto) |
+| `.autoia on/off` | Activa o desactiva la respuesta automática (solo owner) |
+
+---
+
+## 🤖 Respuesta automática con AMILCAR AI
+
+El bot responde solo, sin necesidad de escribir un comando, usando el motor `native` de [AMILCAR AI](https://github.com/AmilcarGit/AMILCAR-AI): **sin Internet, sin API y sin Python**, así que funciona en Termux.
+
+- **Chats privados:** responde a cualquier mensaje de texto.
+- **Grupos:** solo si mencionan al bot o responden a un mensaje suyo.
+- Ignora stickers, audios, imágenes, estados y mensajes muy largos.
+- Tiene una pausa por usuario para evitar spam y recuerda el tema reciente de cada chat ("explícame más").
+- El owner lo activa o desactiva desde WhatsApp con `.autoia on` / `.autoia off`; el estado se guarda en la base de datos.
+
+Se configura en `config.js`, dentro de `autoRespuesta`: `activa`, `privados`, `grupos`, `cooldownSegundos`, `maxCaracteres` y `responderSiNoSabe`.
+
+Para ampliar lo que sabe, edita `data/knowledge-es.json` o `data/dialogos-es.json` en el repositorio de AMILCAR AI y actualiza la dependencia con `npm install github:AmilcarGit/AMILCAR-AI`.
+
+`.ia` usa el mismo motor local. Si prefieres otro modo, define `AMILCAR_AI_MODE` (`cloud`, `api`, `local` o `hybrid`).
+
+Pruebas: `npm test`.
 
 ---
 

@@ -32,6 +32,17 @@ export default {
   maxReconnectAttempts: 8,
   maxReconnectDelay: 5 * 60 * 1000,
 
+  // Respuesta automática con AMILCAR AI (motor local: sin Internet, sin API, sin Python).
+  // El owner puede activarla o desactivarla desde WhatsApp con .autoia on / .autoia off
+  autoRespuesta: {
+    activa: true,
+    privados: true, // responde a cualquier texto en chats privados
+    grupos: true, // en grupos solo si mencionan al bot o responden a un mensaje suyo
+    cooldownSegundos: 4, // pausa por usuario entre respuestas (evita spam)
+    maxCaracteres: 500, // ignora mensajes más largos
+    responderSiNoSabe: true, // false = se queda en silencio cuando no entiende
+  },
+
   // Bienvenida y despedida automática en grupos.
   // Usa {mention} para etiquetar al usuario y {grupo} para el nombre del grupo.
   bienvenida: {
