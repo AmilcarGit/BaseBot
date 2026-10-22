@@ -1,0 +1,81 @@
+name: Security audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.js"
+      - "**/*.mjs"
+      - "**/*.cjs"
+      - "package.json"
+      - "package-lock.json"
+      - "npm-shrinkwrap.json"
+      - ".env*"
+      - ".github/workflows/security-audit.yml"
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "41 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Scan for accidentally committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        id: gitleaks
+        continue-on-error: true
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Summarize secret scan status
+        if: always()
+        env:
+          SCAN_OUTCOME: ${{ steps.gitleaks.outcome }}
+        run: |
+          if [ "$SCAN_OUTCOME" = "success" ]; then
+            echo "### Secret scan" >> "$GITHUB_STEP_SUMMARY"
+            echo "Gitleaks completed without reporting a finding." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::Gitleaks needs review. Inspect the security audit logs; no source files were changed automatically."
+            echo "### Secret scan requires review" >> "$GITHUB_STEP_SUMMARY"
+            echo "Gitleaks did not complete cleanly or reported a finding. Review the action logs. No source files were changed automatically." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  dependency-audit:
+    name: Audit npm dependencies when a lockfile exists
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run npm audit without modifying dependencies
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            if npm audit --omit=dev --audit-level=high; then
+              echo "### Dependency audit" >> "$GITHUB_STEP_SUMMARY"
+              echo "No high/critical production dependency issue was reported by npm audit." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning::npm audit reported a vulnerability or could not complete. Review the full step log; dependencies were not changed."
+              echo "### Dependency audit requires review" >> "$GITHUB_STEP_SUMMARY"
+              echo "npm audit reported a vulnerability or could not complete. Review the action log. No dependency files were changed." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "::notice::No npm lockfile found; npm audit was skipped to avoid generating or changing dependency files."
+            echo "### Dependency audit skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "No package-lock.json or npm-shrinkwrap.json was present, so npm audit was skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
