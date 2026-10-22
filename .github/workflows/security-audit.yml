@@ -51,7 +51,7 @@ jobs:
           fi
 
   dependency-audit:
-    name: Audit npm dependencies when a lockfile exists
+    name: Audit npm dependencies without changing repository files
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -60,22 +60,38 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run npm audit without modifying dependencies
+      - name: Audit package manifest in temporary directory
         continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
-          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-            if npm audit --omit=dev --audit-level=high; then
-              echo "### Dependency audit" >> "$GITHUB_STEP_SUMMARY"
-              echo "No high/critical production dependency issue was reported by npm audit." >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "::warning::npm audit reported a vulnerability or could not complete. Review the full step log; dependencies were not changed."
-              echo "### Dependency audit requires review" >> "$GITHUB_STEP_SUMMARY"
-              echo "npm audit reported a vulnerability or could not complete. Review the action log. No dependency files were changed." >> "$GITHUB_STEP_SUMMARY"
-            fi
-          else
-            echo "::notice::No npm lockfile found; npm audit was skipped to avoid generating or changing dependency files."
+          if [ ! -f package.json ]; then
+            echo "::notice::No package.json found; npm audit was skipped."
             echo "### Dependency audit skipped" >> "$GITHUB_STEP_SUMMARY"
-            echo "No package-lock.json or npm-shrinkwrap.json was present, so npm audit was skipped." >> "$GITHUB_STEP_SUMMARY"
+            echo "No package.json was present in the repository root." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          temp_dir="$(mktemp -d)"
+          trap 'rm -rf "$temp_dir"' EXIT
+          cp package.json "$temp_dir/package.json"
+          if [ -f package-lock.json ]; then
+            cp package-lock.json "$temp_dir/package-lock.json"
+          elif [ -f npm-shrinkwrap.json ]; then
+            cp npm-shrinkwrap.json "$temp_dir/npm-shrinkwrap.json"
+          else
+            echo "No lockfile exists in the repository; generating a temporary lockfile outside the checkout."
+            if ! (cd "$temp_dir" && npm install --package-lock-only --ignore-scripts --no-audit --no-fund); then
+              echo "::warning::Could not resolve a temporary dependency lockfile. Review the step log; repository files were not changed."
+              echo "### Dependency audit needs review" >> "$GITHUB_STEP_SUMMARY"
+              echo "A temporary lockfile could not be resolved; no repository files were changed." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          fi
+          if (cd "$temp_dir" && npm audit --omit=dev --audit-level=high); then
+            echo "### Dependency audit" >> "$GITHUB_STEP_SUMMARY"
+            echo "npm audit did not report high/critical production dependency issues for the resolved manifest." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::npm audit reported a vulnerability or could not complete. Review the full step log; dependencies were not changed."
+            echo "### Dependency audit needs review" >> "$GITHUB_STEP_SUMMARY"
+            echo "npm audit reported a vulnerability or could not complete. Review the action log. No dependency files were changed." >> "$GITHUB_STEP_SUMMARY"
           fi
