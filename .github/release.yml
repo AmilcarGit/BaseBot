@@ -1,0 +1,28 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - github-actions[bot]
+  categories:
+    - title: "🚀 Nuevas funciones"
+      labels:
+        - enhancement
+        - feature
+    - title: "🐛 Correcciones"
+      labels:
+        - bug
+        - fix
+    - title: "🔐 Seguridad"
+      labels:
+        - security
+    - title: "📚 Documentación"
+      labels:
+        - documentation
+    - title: "🧰 Mantenimiento"
+      labels:
+        - dependencies
+        - maintenance
+    - title: "📦 Otros cambios"
+      labels:
+        - "*"
