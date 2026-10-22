@@ -1,0 +1,36 @@
+name: Reportar un error
+description: Informa de un fallo reproducible.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "No compartas tokens, contraseñas, sesiones ni datos personales. Redacta los registros antes de publicarlos."
+  - type: textarea
+    id: summary
+    attributes:
+      label: ¿Qué ocurrió?
+      description: Describe el resultado observado y el esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Entorno y versiones
+      description: Sistema operativo y versión de Node.js si corresponde.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Registro de error sin datos privados
+      render: text
+    validations:
+      required: false
