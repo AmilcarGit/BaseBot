@@ -3,7 +3,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 import config from './config.js'
-import { esOwner, normalizarJid } from './lib/utils.js'
+import { esOwner, normalizarJid, contenidoMensaje, textoDeMensaje } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
 import { info, error as logError } from './lib/logger.js'
@@ -86,14 +86,10 @@ export default async function handler(sock, m) {
     logError('Error guardando en la base de datos:', err)
   }
 
-  const texto =
-    msg.message.conversation ||
-    msg.message.extendedTextMessage?.text ||
-    msg.message.imageMessage?.caption ||
-    ''
+  const texto = textoDeMensaje(msg)
 
   // Log de todo mensaje entrante (aunque no sea comando), útil para depurar.
-  const tipoMensaje = Object.keys(msg.message)[0]
+  const tipoMensaje = Object.keys(contenidoMensaje(msg) || msg.message)[0]
   const esGrupo = chatId.endsWith('@g.us')
   info(
     chalk.cyan(esGrupo ? '👥 Grupo' : '👤 Privado'),

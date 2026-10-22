@@ -138,3 +138,44 @@ test('cada chat recuerda su tema reciente', async () => {
   const otroChat = await chatNativo('chat-nuevo', 'explícame más')
   assert.equal(otroChat.intent, 'unknown')
 })
+
+test('funciona aunque config.js no tenga el bloque autoRespuesta (config antiguo)', async () => {
+  const guardado = config.autoRespuesta
+  delete config.autoRespuesta
+  try {
+    const sock = crearSock()
+    const chat = privado(20)
+    assert.equal(await autoResponder({ sock, msg: mensaje('hola', { chat }), chatId: chat, jidRemitente: chat }), true)
+    assert.equal(sock.enviados.length, 1)
+  } finally {
+    config.autoRespuesta = guardado
+  }
+})
+
+test('lee el texto en chats con mensajes temporales y de una sola vista', async () => {
+  for (const [i, message] of [
+    { ephemeralMessage: { message: { conversation: 'hola' } } },
+    { viewOnceMessage: { message: { extendedTextMessage: { text: 'hola' } } } },
+    { ephemeralMessage: { message: { ephemeralMessage: { message: { conversation: 'hola' } } } } },
+  ].entries()) {
+    const sock = crearSock()
+    const chat = privado(30 + i)
+    const msg = mensaje('', { chat, message })
+    assert.equal(await autoResponder({ sock, msg, chatId: chat, jidRemitente: chat, activa: true }), true, `caso ${i}`)
+  }
+})
+
+test('el texto envuelto también sirve para detectar menciones en grupos', async () => {
+  const sock = crearSock()
+  const msg = mensaje('', {
+    chat: grupo,
+    message: {
+      ephemeralMessage: {
+        message: {
+          extendedTextMessage: { text: `@${BOT} hola`, contextInfo: { mentionedJid: [`${BOT}@s.whatsapp.net`] } },
+        },
+      },
+    },
+  })
+  assert.equal(esParaElBot(sock, msg), true)
+})
