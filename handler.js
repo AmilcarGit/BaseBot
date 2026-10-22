@@ -115,8 +115,9 @@ export default async function handler(sock, m) {
   const esDueno = esOwner(jidRemitente, config.owner)
 
   if (entrada.soloOwner && !esDueno) {
+    const miId = normalizarJid(jidRemitente).split('@')[0]
     return sock.sendMessage(chatId, {
-      text: '⛔ Este comando es solo para el owner del bot.',
+      text: `⛔ Este comando es solo para el owner del bot.\n\n🪪 Tu ID: *${miId}*\nSi eres el owner, agrega ese número a \`owner\` en config.js y reinicia el bot.`,
     })
   }
 
