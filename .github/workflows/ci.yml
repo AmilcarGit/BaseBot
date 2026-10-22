@@ -1,0 +1,37 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  syntax:
+    name: JavaScript syntax check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Check tracked JavaScript files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(git ls-files -z '*.js' '*.mjs' '*.cjs')
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No tracked JavaScript files found."
+            exit 1
+          fi
+          for file in "${files[@]}"; do
+            echo "Checking ${file}"
+            node --check "${file}"
+          done
