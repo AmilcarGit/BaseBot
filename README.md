@@ -143,19 +143,28 @@ Todo se controla desde `config.js`:
 
 ## 🤖 Respuesta automática con AMILCAR AI
 
-El bot responde solo, sin necesidad de escribir un comando, usando el motor `native` de [AMILCAR AI](https://github.com/AmilcarGit/AMILCAR-AI): **sin Internet, sin API y sin Python**, así que funciona en Termux.
+El bot responde solo, sin necesidad de escribir un comando, con [AMILCAR AI](https://github.com/AmilcarGit/AMILCAR-AI). **No usa Internet, ni APIs, ni Python**, así que funciona en Termux.
 
 - **Chats privados:** responde a cualquier mensaje de texto.
 - **Grupos:** solo si mencionan al bot o responden a un mensaje suyo.
-- Ignora stickers, audios, imágenes, estados y mensajes muy largos.
-- Tiene una pausa por usuario para evitar spam y recuerda el tema reciente de cada chat ("explícame más").
-- El owner lo activa o desactiva desde WhatsApp con `.autoia on` / `.autoia off`; el estado se guarda en la base de datos.
+- Ignora stickers, audios, imágenes, estados y mensajes muy largos. Tiene una pausa por usuario para evitar spam.
+- El owner lo activa o desactiva desde WhatsApp con `.autoia on` / `.autoia off`.
 
-Se configura en `config.js`, dentro de `autoRespuesta`: `activa`, `privados`, `grupos`, `cooldownSegundos`, `maxCaracteres` y `responderSiNoSabe`.
+**Cómo genera la respuesta** (`autoRespuesta.motor` en `config.js`):
 
-Para ampliar lo que sabe, edita `data/knowledge-es.json` o `data/dialogos-es.json` en el repositorio de AMILCAR AI y actualiza la dependencia con `npm install github:AmilcarGit/AMILCAR-AI`.
+| Motor | Qué hace |
+|---|---|
+| `auto` (por defecto) | Responde el modelo neuronal **AMI-Base** (una red entrenada desde cero que genera el texto token por token). Si el propio modelo duda (confianza menor a `umbralConfianza`), responde el motor `native`. |
+| `neural` | Siempre el modelo neuronal. |
+| `native` | Solo el motor de reglas y coincidencias. |
 
-`.ia` usa el mismo motor local. Si prefieres otro modo, define `AMILCAR_AI_MODE` (`cloud`, `api`, `local` o `hybrid`).
+Las cuentas (`25 * 4`) y la hora siempre las responde el motor exacto. El modelo aprendió a decir "no sé" ante lo que no conoce, y con `responderSiNoSabe: false` el bot se queda en silencio en esos casos.
+
+**Comandos de ayuda:** `.autoia` muestra el estado (motor y si el modelo está cargado), `.autoia probar <texto>` muestra qué motor respondió y con qué confianza, y `.id` te dice tu ID para configurar el `owner`. Con `AUTOIA_DEBUG=1 npm start` la consola explica por qué se omite cada mensaje.
+
+**Ampliar lo que sabe:** el modelo se entrena en GitHub con los datos del repositorio de AMILCAR AI (`data/dialogos-es.json`, `data/knowledge-es.json`, `data/fuera-de-tema-es.json`). Al cambiarlos se reentrena solo (unos 7 minutos); luego, aquí, `npm install github:AmilcarGit/AMILCAR-AI` y reinicia el bot.
+
+Se configura en `config.js`, dentro de `autoRespuesta`: `activa`, `privados`, `grupos`, `cooldownSegundos`, `maxCaracteres`, `responderSiNoSabe`, `motor` y `umbralConfianza`. `.ia` usa el mismo motor; para otro modo define `AMILCAR_AI_MODE` (`cloud`, `api`, `local` o `hybrid`).
 
 Pruebas: `npm test`.
 

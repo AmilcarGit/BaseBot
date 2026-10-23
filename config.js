@@ -41,6 +41,8 @@ export default {
     cooldownSegundos: 4, // pausa por usuario entre respuestas (evita spam)
     maxCaracteres: 500, // ignora mensajes más largos
     responderSiNoSabe: true, // false = se queda en silencio cuando no entiende
+    motor: 'auto', // 'auto' = modelo neuronal y, si duda, motor nativo | 'neural' | 'native'
+    umbralConfianza: 0.5, // confianza mínima (0 a 1) para aceptar la respuesta del modelo neuronal
   },
 
   // Bienvenida y despedida automática en grupos.

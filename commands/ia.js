@@ -1,11 +1,11 @@
 import { AmilcarAI, AmilcarAIError } from 'amilcar-ai'
-import { chatNativo } from '../lib/autoreply.js'
+import { responder } from '../lib/autoreply.js'
 
 export const desc = 'Chatea con AMILCAR AI'
 export const alias = ['amilcar', 'ai']
 export const cooldown = 5
 
-// Por defecto usa el motor nativo (local, sin API ni Python). Para otro modo define AMILCAR_AI_MODE
+// Por defecto usa el motor local (modelo neuronal AMI-Base y, si duda, el motor nativo; sin API ni Python). Para otro modo define AMILCAR_AI_MODE
 // (cloud, api, local o hybrid).
 const modo = process.env.AMILCAR_AI_MODE || 'native'
 
@@ -33,8 +33,8 @@ export default async function amilcarAI({ sock, chatId, args }) {
   }
 
   try {
-    const resultado = ia ? await ia.chat(pregunta) : await chatNativo(chatId, pregunta)
-    const aviso = resultado.mode === 'native' || resultado.mode === 'cloud' || resultado.mode === 'hybrid' || resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
+    const resultado = ia ? await ia.chat(pregunta) : await responder(chatId, pregunta)
+    const aviso = resultado.mode === 'native' || resultado.mode === 'neural' || resultado.motor || resultado.mode === 'cloud' || resultado.mode === 'hybrid' || resultado.trained ? '' : '\n\n_Nota: el modelo aún no está entrenado._'
     const respuesta = `🤖 *AMILCAR AI*\n\n${resultado.reply.trim() || 'No se recibió una respuesta con texto.'}${aviso}\n\n_🧠 Modelo: ${resultado.model}_`
     await sock.sendMessage(chatId, { text: respuesta })
   } catch (err) {
