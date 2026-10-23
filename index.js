@@ -55,19 +55,20 @@ async function iniciar() {
   })
 
   // --- Solicitud del código de vinculación ---
-  // Se dispara apenas el socket empieza a conectar, ya con el número
-  // en mano, para no perder la ventana de tiempo que da WhatsApp.
+  // Se dispara con el primer evento 'qr' (socket listo), con el número ya en mano.
   sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect } = update
+    const { connection, lastDisconnect, qr } = update
 
+    // WhatsApp envía el primer 'qr' cuando el socket ya está listo; pedir el código en
+    // 'connecting' (antes de que abra) provoca "Connection Closed" (428).
     if (
-      connection === 'connecting' &&
+      qr &&
       !sock.authState.creds.registered &&
       !codigoSolicitado &&
       numero
     ) {
       codigoSolicitado = true
-      await delay(1500)
+      await delay(500)
 
       try {
         const codigo = await sock.requestPairingCode(numero)
