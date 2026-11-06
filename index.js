@@ -1,9 +1,8 @@
 import makeWASocket, {
   useMultiFileAuthState,
-  fetchLatestBaileysVersion,
   DisconnectReason,
   makeCacheableSignalKeyStore,
-} from '@whiskeysockets/baileys'
+} from 'yui-bails'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -28,7 +27,6 @@ async function iniciar() {
   const { state, saveCreds } = await useMultiFileAuthState(
     config.sessionFolder
   )
-  const { version } = await fetchLatestBaileysVersion()
 
   // Pedimos el número ANTES de abrir el socket. Si se pide después de
   // 'connecting', la espera por la respuesta del usuario hace que
@@ -43,8 +41,8 @@ async function iniciar() {
   }
   if (numero) numero = numero.replace(/\D/g, '')
 
+  // Yui-Bails consulta sola la versión vigente de WhatsApp Web en cada conexión
   const sock = makeWASocket({
-    version,
     logger,
     printQRInTerminal: false,
     auth: {

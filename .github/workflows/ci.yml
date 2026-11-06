@@ -35,3 +35,34 @@ jobs:
             echo "Checking ${file}"
             node --check "${file}"
           done
+
+  install-smoke:
+    name: Instalar Yui-Bails y probar
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Instalar dependencias (compila Yui-Bails desde GitHub)
+        run: npm install --no-audit --no-fund
+      - name: Comprobar que Yui-Bails exporta lo que usa el bot
+        run: |
+          node --input-type=module -e "
+          import makeWASocket, * as y from 'yui-bails'
+          const need = ['useMultiFileAuthState','makeCacheableSignalKeyStore','DisconnectReason','downloadMediaMessage','jidNormalizedUser']
+          const missing = need.filter(k => !(k in y))
+          if (typeof makeWASocket !== 'function') missing.push('default (makeWASocket)')
+          if (missing.length) { console.error('Faltan exports:', missing.join(', ')); process.exit(1) }
+          console.log('Yui-Bails OK:', need.length + 1, 'exports comprobados')
+          "
+      - name: Cargar los módulos del bot que usan Yui-Bails
+        run: node --input-type=module -e "await import('./lib/media.js'); console.log('lib/media.js OK')"
+      - name: Pruebas
+        run: npm test

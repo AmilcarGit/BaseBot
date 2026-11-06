@@ -7,11 +7,11 @@
 
 <a href='https://postimg.cc/CBKpRN5t' target='_blank'><img src='https://i.postimg.cc/HxwYPvgp/file-00000000e520820e93edc45acabd1530.png' border='0' alt='file-00000000e520820e93edc45acabd1530'></a>
 
-**Plantilla base para crear tu propio bot de WhatsApp**, construida sobre [Baileys](https://github.com/WhiskeySockets/Baileys), con vinculación mediante **código de emparejamiento** (sin escanear QR).
+**Plantilla base para crear tu propio bot de WhatsApp**, construida sobre [Yui-Bails](https://github.com/AmilcarGit/Yui-Bails), con vinculación mediante **código de emparejamiento** (sin escanear QR).
 
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933?logo=node.js&logoColor=white)
 ![npm](https://img.shields.io/badge/npm-%3E%3D10-CB3837?logo=npm&logoColor=white)
-![Baileys](https://img.shields.io/badge/Baileys-6.7.x-25D366?logo=whatsapp&logoColor=white)
+![Yui-Bails](https://img.shields.io/badge/Yui--Bails-7.0-25D366?logo=whatsapp&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
@@ -56,12 +56,12 @@
 
 Hay muchas plantillas de bots de WhatsApp, pero **BaseBot** destaca por:
 
-✅ **Sin dependencias pesadas innecesarias** — solo Baileys y lo esencial  
+✅ **Sin dependencias pesadas innecesarias** — solo Yui-Bails y lo esencial  
 ✅ **Estructura clara y escalable** — agregar comandos es literal copiar-pegar  
 ✅ **Listo para producción** — incluye manejo de errores, reconexión y caché  
 ✅ **Funciona en cualquier lugar** — VPS, Termux, computadora local  
 ✅ **Documentación completa** — cada sección está bien explicada  
-✅ **Mantenido activamente** — recibe actualizaciones junto con Baileys
+✅ **Mantenido activamente** — recibe actualizaciones junto con Yui-Bails
 
 ---
 
@@ -97,7 +97,7 @@ Una vez vinculado, la sesión queda guardada en `session/` y no se te volverá a
 
 ```
 .
-├── index.js              # Conexión a Baileys: vinculación, reconexión, eventos
+├── index.js              # Conexión a Yui-Bails: vinculación, reconexión, eventos
 ├── handler.js            # Enrutador de mensajes → despacha al comando correcto
 ├── config.js             # Configuración global del bot
 ├── package.json
@@ -184,7 +184,7 @@ Cada comando recibe un solo objeto con:
 
 | Propiedad | Tipo | Descripción |
 |---|---|---|
-| `sock` | `WASocket` | La instancia activa de Baileys |
+| `sock` | `WASocket` | La instancia activa de Yui-Bails |
 | `msg` | `object` | El mensaje original completo |
 | `args` | `string[]` | Palabras después del comando |
 | `chatId` | `string` | JID del chat donde responder |
@@ -317,7 +317,7 @@ npm start
 
 | Problema | Causa | Solución |
 |---|---|---|
-| `useMultiFileAuthState is not a function` | Import mal en Baileys | Usa `import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys'` |
+| `useMultiFileAuthState is not a function` | Import mal en Yui-Bails | Usa `import makeWASocket, { useMultiFileAuthState } from 'yui-bails'` |
 | Error `408`/`428` | Timeout al pedir código | Define `numeroBot` en `config.js` |
 | `ERESOLVE` con `jimp` | Versión desactualizada | Usa `jimp@^1.6.0` |
 | Bot no se reconecta | Event handler no configurado | Revisa `index.js` |
@@ -333,7 +333,7 @@ npm start
 - 🐛 **[Abre un issue](https://github.com/AmilcarGit/BaseBot/issues)** con detalles del problema
 - 💡 **[Sugerencias](https://github.com/AmilcarGit/BaseBot/issues)** — usa Discussions
 - ⭐ Si te fue útil, **dale una estrella** al repo
-- 📖 Consulta la [documentación de Baileys](https://github.com/WhiskeySockets/Baileys)
+- 📖 Consulta la [documentación de Yui-Bails](https://github.com/AmilcarGit/Yui-Bails#readme)
 
 ---
 
