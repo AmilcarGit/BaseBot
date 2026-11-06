@@ -27,6 +27,7 @@
 - [Estructura del proyecto](#-estructura-del-proyecto)
 - [Configuración](#-configuración)
 - [Comandos incluidos](#-comandos-incluidos)
+- [Comandos de prueba de Yui-Bails](#-comandos-de-prueba-de-yui-bails)
 - [Cómo agregar un comando nuevo](#-cómo-agregar-un-comando-nuevo)
 - [Ejemplos prácticos](#-ejemplos-prácticos)
 - [Buenas prácticas para tus comandos](#-buenas-prácticas-para-tus-comandos)
@@ -138,6 +139,42 @@ Todo se controla desde `config.js`:
 | `.ping` | Muestra la latencia del bot |
 | `.ia <pregunta>` | Chatea con AMILCAR AI (motor local por defecto) |
 | `.autoia on/off` | Activa o desactiva la respuesta automática (solo owner) |
+
+---
+
+## 🧪 Comandos de prueba de Yui-Bails
+
+Estos comandos ejercitan las funciones de la librería. Escribe **`.pruebas`** para ver el catálogo y ejecutar los más rápidos desde un desplegable.
+
+| Comando | Qué prueba | Acceso |
+|---|---|---|
+| `.botones` · `clasico` · `imagen` | Botones nativos (respuesta rápida, URL, llamar, copiar, desplegable), formato clásico y con imagen | todos |
+| `.lista` | Mensaje de lista (en grupos, desplegable) | todos |
+| `.encuesta [pregunta \| op1 \| op2]` · `multi` | Encuestas y **descifrado de votos** con recuento en vivo | todos |
+| `.evento [nombre]` | Evento de calendario | todos |
+| `.ubicacion [lat lon nombre]` | Ubicación | todos |
+| `.contacto` | Tarjetas de contacto (vCard) | todos |
+| `.reaccion [emoji \| ruleta \| quitar]` | Reacciones | todos |
+| `.editar [borrar]` | Editar un mensaje dos veces y borrarlo para todos | todos |
+| `.vistaunica` | Imagen/video de vista única | todos |
+| `.preview [url]` | Enlace con vista previa | todos |
+| `.medios imagen \| audio \| documento \| nota \| gif \| redondo \| reenviar` | Tipos de medios: imagen, audio, nota de voz, documento, GIF y video redondo | todos |
+| `.reenviar` | Reenviar un mensaje (etiqueta "Reenviado") | todos |
+| `.fijar [24h\|7d\|30d\|quitar]` | Fijar mensajes | todos |
+| `.escribiendo` | Marcar como leído y presencia (escribiendo, grabando) | todos |
+| `.consulta existe \| estado \| foto \| negocio \| presencia` | Consultas de usuarios | todos |
+| `.mencionar [nativo]` · `.todos` | Mencionar a todos (lista y `mentionAll`) | 🛡️ admin |
+| `.grupo info \| link \| revocar \| nombre \| desc \| ajustes \| efimero \| modo \| agregar \| expulsar \| promover \| degradar \| solicitudes` | Gestión de grupos | 🛡️ admin |
+| `.chat silenciar \| archivar \| fijar \| leido \| estrella \| efimeros` | Modificar el chat (`chatModify`) | 🔒 owner |
+| `.botperfil nombre \| estado \| foto \| quitarfoto \| fotogrupo` | Perfil del bot | 🔒 owner |
+| `.privacidad ver \| bloqueados \| bloquear \| desbloquear` | Privacidad y bloqueos | 🔒 owner |
+| `.historia <texto> \| imagen` | Estados (visibles solo para el owner y el bot) | 🔒 owner |
+
+**Cómo funcionan los botones:** el `id` de cada botón es un comando (por ejemplo `.ping`). Al tocarlo, el bot lo recibe como si lo hubieras escrito.
+
+**Si un comando falla**, el owner ve el error en el mismo chat. Los comandos que cambian cosas (`.chat`, `.botperfil`, `.privacidad`, `.grupo`) están restringidos a propósito: un cambio mal hecho en el chat puede cerrar tus sesiones de WhatsApp.
+
+**Pruebas automáticas:** `npm test` ejecuta cada comando con un socket simulado y valida todos los mensajes con Yui-Bails. No se conecta a WhatsApp.
 
 ---
 

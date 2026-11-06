@@ -26,6 +26,7 @@ const cooldowns = new Map()
  *   export const cooldown = 5        // segundos, 0 = sin cooldown
  *   export const soloOwner = true    // solo el owner puede usarlo
  *   export const soloAdmin = true    // solo admins del grupo (o el owner)
+ *   export const categoria = 'prueba' // agrupa comandos (.pruebas lista los de categoría 'prueba')
  */
 async function cargarComandos() {
   const archivos = fs
@@ -44,6 +45,7 @@ async function cargarComandos() {
       cooldown: mod.cooldown ?? 3,
       soloOwner: mod.soloOwner || false,
       soloAdmin: mod.soloAdmin || false,
+      categoria: mod.categoria || 'general',
     }
 
     comandos[nombre] = entrada
@@ -171,5 +173,13 @@ export default async function handler(sock, m) {
   } catch (err) {
     logError(`Error en el comando "${entrada.nombre}":`, err)
     await notificarErrorAlOwner(sock, err, entrada.nombre)
+    // el owner está probando: que también lo vea en el chat donde ejecutó el comando
+    if (esDueno) {
+      await sock
+        .sendMessage(chatId, {
+          text: `⚠️ *${config.prefijo}${entrada.nombre}* falló: ${err?.message || err}`,
+        })
+        .catch(() => {})
+    }
   }
 }

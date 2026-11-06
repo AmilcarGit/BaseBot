@@ -11,6 +11,8 @@ import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
 import { info, warn, error as logError } from './lib/logger.js'
+import { guardarMensaje, obtenerMensaje } from './lib/store.js'
+import { procesarVotos } from './lib/votos.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
@@ -50,6 +52,8 @@ async function iniciar() {
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
+    // necesario para reintentos de envío y para descifrar los votos de las encuestas
+    getMessage: async (key) => obtenerMensaje(key),
   })
 
   // --- Solicitud del código de vinculación ---
@@ -125,6 +129,7 @@ async function iniciar() {
   sock.ev.on('creds.update', saveCreds)
 
   sock.ev.on('messages.upsert', async (m) => {
+    for (const mensaje of m.messages || []) guardarMensaje(mensaje)
     try {
       await handler(sock, m)
     } catch (err) {
@@ -140,6 +145,11 @@ async function iniciar() {
         logError('Error procesando mensaje:', err)
       }
     }
+  })
+
+  // --- Votos de las encuestas creadas con .encuesta ---
+  sock.ev.on('messages.update', async (actualizaciones) => {
+    await procesarVotos(sock, actualizaciones)
   })
 
   // --- Bienvenida / despedida automática de grupos ---
