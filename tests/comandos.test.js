@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url'
 import * as yui from 'yui-bails'
 import config from '../config.js'
 import { obtenerEncuesta } from '../lib/store.js'
-import { textoDeMensaje } from '../lib/utils.js'
+import { esOwner, identidadesDe, resolverIdentidades, textoDeMensaje } from '../lib/utils.js'
+import { esAdminGrupo } from '../lib/groupPermissions.js'
 import { textoResultados } from '../lib/votos.js'
 import { duracionEfimera, jidObjetivo, pngDegradado, wavTono } from '../lib/pruebas.js'
 
@@ -199,6 +200,46 @@ test('duracionEfimera y jidObjetivo', () => {
   assert.equal(jidObjetivo(mensaje('x'), ['51933333333']), OTRO)
   assert.equal(jidObjetivo(mensaje('x', { citado: { conversation: 'hola' } })), USUARIO)
   assert.equal(jidObjetivo(mensaje('x')), null)
+})
+
+test('el owner se reconoce por número o por ID interno (@lid)', async () => {
+  const LID = '269715926691844@lid'
+  const owner = ['51900000000']
+
+  // chat privado: el remitente llega como @lid y su número en remoteJidAlt
+  const privado = { key: { remoteJid: LID, remoteJidAlt: '51900000000@s.whatsapp.net', id: 'A1' } }
+  assert.deepEqual(identidadesDe(privado), [LID, '51900000000@s.whatsapp.net'])
+  assert.equal(esOwner(identidadesDe(privado), owner), true)
+
+  // grupo: participant es el @lid y participantAlt el número (el grupo no cuenta como identidad)
+  const grupo = { key: { remoteJid: GRUPO, participant: LID, participantAlt: '51900000000@s.whatsapp.net', id: 'A2' } }
+  assert.deepEqual(identidadesDe(grupo), [LID, '51900000000@s.whatsapp.net'])
+  assert.equal(esOwner(identidadesDe(grupo), owner), true)
+
+  // sin número disponible: sirve poner el ID interno en config.owner
+  const soloLid = { key: { remoteJid: LID, id: 'A3' } }
+  assert.equal(esOwner(identidadesDe(soloLid), owner), false)
+  assert.equal(esOwner(identidadesDe(soloLid), ['269715926691844']), true)
+  assert.equal(esOwner('51900000000:7@s.whatsapp.net', owner), true) // acepta un solo jid, con sufijo de dispositivo
+  assert.equal(esOwner(identidadesDe({ key: { remoteJid: OTRO } }), owner), false)
+
+  // si Yui-Bails conoce la equivalencia @lid -> número, también se usa
+  const sock = { signalRepository: { lidMapping: { getPNForLID: async () => '51900000000:2@s.whatsapp.net' } } }
+  const resueltas = await resolverIdentidades(sock, soloLid)
+  assert.equal(esOwner(resueltas, owner), true)
+  assert.deepEqual(await resolverIdentidades({}, soloLid), [LID]) // sin mapeo disponible no falla
+})
+
+test('los admins de un grupo se reconocen por número o por ID interno', async () => {
+  const LID = '269715926691844@lid'
+  const { sock } = crearSock({
+    groupMetadata: { ...METADATA, participants: [{ id: LID, lid: LID, phoneNumber: USUARIO, admin: 'admin' }, { id: OTRO, admin: null }] },
+  })
+  const GRUPO_ADMIN = '120363111111111111@g.us' // grupo distinto para no usar el caché de otras pruebas
+  assert.equal(await esAdminGrupo(sock, GRUPO_ADMIN, [LID]), true)
+  assert.equal(await esAdminGrupo(sock, GRUPO_ADMIN, [USUARIO]), true, 'por su número')
+  assert.equal(await esAdminGrupo(sock, GRUPO_ADMIN, [OTRO]), false)
+  assert.equal(await esAdminGrupo(sock, PRIVADO, [LID]), false)
 })
 
 test('tocar un botón o elegir de una lista llega como texto del comando', () => {

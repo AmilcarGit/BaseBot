@@ -3,7 +3,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 import config from './config.js'
-import { esOwner, normalizarJid, contenidoMensaje, textoDeMensaje } from './lib/utils.js'
+import { esOwner, normalizarJid, contenidoMensaje, textoDeMensaje, resolverIdentidades } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
 import { info, error as logError } from './lib/logger.js'
@@ -114,17 +114,20 @@ export default async function handler(sock, m) {
   const entrada = comando && comandos[comando]
   if (!entrada) return
 
-  const esDueno = esOwner(jidRemitente, config.owner)
+  // WhatsApp puede identificarte con tu número o con un ID interno (@lid): se comparan ambos
+  const identidades = await resolverIdentidades(sock, msg)
+  const esDueno = esOwner(identidades, config.owner)
 
   if (entrada.soloOwner && !esDueno) {
-    const miId = normalizarJid(jidRemitente).split('@')[0]
+    const lid = identidades.find((j) => j.endsWith('@lid'))?.split('@')[0]
+    const numero = identidades.find((j) => j.endsWith('@s.whatsapp.net'))?.split('@')[0]
     return sock.sendMessage(chatId, {
-      text: `⛔ Este comando es solo para el owner del bot.\n\n🪪 Tu ID: *${miId}*\nSi eres el owner, agrega ese número a \`owner\` en config.js y reinicia el bot.`,
+      text: `⛔ Este comando es solo para el owner del bot.\n\n🪪 Tu ID: *${lid || numero}*${lid && numero ? `\n📞 Tu número: *${numero}*` : ''}\nSi eres el owner, agrega ${numero ? 'tu número' : 'ese ID'} a \`owner\` en config.js y reinicia el bot.`,
     })
   }
 
   if (entrada.soloAdmin && !esDueno) {
-    const esAdmin = await esAdminGrupo(sock, chatId, jidRemitente)
+    const esAdmin = await esAdminGrupo(sock, chatId, identidades)
     if (!esAdmin) {
       return sock.sendMessage(chatId, {
         text: '⛔ Este comando es solo para administradores del grupo.',
