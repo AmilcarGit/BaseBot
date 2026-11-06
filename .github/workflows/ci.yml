@@ -65,4 +65,5 @@ jobs:
       - name: Cargar los módulos del bot que usan Yui-Bails
         run: node --input-type=module -e "await import('./lib/media.js'); console.log('lib/media.js OK')"
       - name: Pruebas
-        run: npm test
+        # se ejecuta el archivo directo: el ejecutor `node --test` de Node 22 falla al leer su salida
+        run: node tests/autoreply.test.js
