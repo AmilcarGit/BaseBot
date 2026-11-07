@@ -190,6 +190,7 @@ También puedes usar \`.api\` o \`.yapi\` como alias. Escribe \`.yuiapi ayuda\` 
 | `.ping` | Muestra la latencia del bot |
 | `.ia <pregunta>` | Chatea con AMILCAR AI (motor local por defecto) |
 | `.autoia on/off` | Activa o desactiva la respuesta automática (solo owner) |
+| `.yuiapi ayuda` | Prueba los endpoints de YuiAPI desde WhatsApp (búsquedas, stickers, imágenes y herramientas) |
 
 ---
 
