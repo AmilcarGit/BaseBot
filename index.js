@@ -177,7 +177,11 @@ async function iniciar() {
       const metadata = await sock.groupMetadata(chatId)
       const nombreGrupo = metadata.subject
 
-      for (const jid of participants) {
+      for (const participante of participants) {
+        // las versiones nuevas de Yui-Bails entregan objetos { id, lid, ... }; las viejas, textos
+        const jid = typeof participante === 'string' ? participante : participante?.id
+        if (!jid) continue
+
         const plantilla =
           action === 'add'
             ? config.bienvenida.mensajeEntrada
@@ -197,6 +201,15 @@ async function iniciar() {
       logError('Error en bienvenida/despedida:', err)
     }
   })
+
+  // Los comandos nuevos usan helpers de Yui-Bails: si la versión instalada es vieja, avisa cómo actualizar
+  if (typeof sock.getSender !== 'function' || typeof sock.sendPoll !== 'function') {
+    warn(
+      chalk.yellow(
+        'Tu Yui-Bails instalado es antiguo (faltan sock.getSender / sock.sendPoll). Actualiza con:\n  npm install github:AmilcarGit/Yui-Bails'
+      )
+    )
+  }
 
   return sock
 }
