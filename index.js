@@ -15,6 +15,19 @@ import { guardarMensaje, obtenerMensaje } from './lib/store.js'
 import { procesarVotos } from './lib/votos.js'
 
 const logger = pino({ level: 'silent' })
+
+/** Opciones de la cola anti-ban a partir de config.antiBan (false = sin cola). */
+function colaAntiBan() {
+  const a = config.antiBan
+  if (!a?.activa) return false
+  return {
+    minDelayMs: a.pausaMinMs,
+    maxDelayMs: a.pausaMaxMs,
+    perChatIntervalMs: a.porChatMs,
+    perChatLimit: { max: a.maxPorMinuto, windowMs: 60_000 },
+    typing: a.escribiendo,
+  }
+}
 let intentosReconexion = 0
 let codigoSolicitado = false
 
@@ -54,6 +67,8 @@ async function iniciar() {
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
     // necesario para reintentos de envío y para descifrar los votos de las encuestas
     getMessage: async (key) => obtenerMensaje(key),
+    // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
+    sendQueue: colaAntiBan(),
   })
 
   // --- Solicitud del código de vinculación ---
@@ -148,8 +163,9 @@ async function iniciar() {
   })
 
   // --- Votos de las encuestas creadas con .encuesta ---
-  sock.ev.on('messages.update', async (actualizaciones) => {
-    await procesarVotos(sock, actualizaciones)
+  // Yui-Bails entrega el resultado ya descifrado y acumulado en el evento `poll.votes`
+  sock.ev.on('poll.votes', async (votos) => {
+    await procesarVotos(sock, votos)
   })
 
   // --- Bienvenida / despedida automática de grupos ---

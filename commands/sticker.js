@@ -20,6 +20,6 @@ export default async function sticker({ sock, chatId, msg }) {
     })
   }
 
-  const buffer = await descargarMedia(objetivo)
+  const buffer = await descargarMedia(objetivo, sock)
   await enviarSticker(sock, chatId, buffer)
 }

@@ -32,6 +32,17 @@ export default {
   maxReconnectAttempts: 8,
   maxReconnectDelay: 5 * 60 * 1000,
 
+  // Cola anti-ban de Yui-Bails: los mensajes salen uno a uno, con pausas aleatorias,
+  // un límite por chat y "escribiendo…" antes de los textos. Pon activa: false para desactivarla.
+  antiBan: {
+    activa: true,
+    pausaMinMs: 600, // pausa aleatoria mínima entre dos mensajes
+    pausaMaxMs: 1800, // y máxima
+    porChatMs: 1200, // mínimo entre dos mensajes al mismo chat
+    maxPorMinuto: 20, // máximo de mensajes por chat cada minuto
+    escribiendo: true, // muestra "escribiendo…" antes de enviar textos
+  },
+
   // Respuesta automática con AMILCAR AI (motor local: sin Internet, sin API, sin Python).
   // El owner puede activarla o desactivarla desde WhatsApp con .autoia on / .autoia off
   autoRespuesta: {

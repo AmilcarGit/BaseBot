@@ -52,7 +52,7 @@ export default async function medios({ sock, chatId, msg, args, config }) {
       return sock.sendMessage(chatId, { text: `📌 Responde a ${que} con *${p}medios ${modo}*` }, { quoted: msg })
     }
 
-    const buffer = await descargarMedia(citado)
+    const buffer = await descargarMedia(citado, sock)
     if (modo === 'nota') return enviar(sock, chatId, { audio: buffer, mimetype: 'audio/ogg; codecs=opus', ptt: true }, msg)
     if (modo === 'gif') return enviar(sock, chatId, { video: buffer, gifPlayback: true, caption: '🎞️ GIF' }, msg)
     if (modo === 'redondo') return enviar(sock, chatId, { video: buffer, ptv: true }, msg)

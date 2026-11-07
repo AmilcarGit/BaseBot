@@ -34,7 +34,7 @@ export default async function botPerfil({ sock, chatId, msg, args, config }) {
     if (!citado || tipoDeMedia(citado) !== 'imageMessage') return responder(`📌 Responde a una imagen con *${p}botperfil ${accion}*`)
     if (accion === 'fotogrupo' && !chatId.endsWith('@g.us')) return responder('👥 Esto solo funciona en grupos.')
 
-    const buffer = await descargarMedia(citado)
+    const buffer = await descargarMedia(citado, sock)
     await sock.updateProfilePicture(accion === 'foto' ? yo : chatId, buffer)
     return responder('✅ Foto actualizada.')
   }

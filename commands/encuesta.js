@@ -1,5 +1,4 @@
-import { enviar } from '../lib/pruebas.js'
-import { registrarEncuesta } from '../lib/store.js'
+import { guardarMensaje, registrarEncuesta } from '../lib/store.js'
 
 export const desc = 'Crea una encuesta y muestra el recuento al votar (descifra los votos)'
 export const alias = ['poll']
@@ -35,18 +34,15 @@ export default async function encuesta({ sock, chatId, msg, args, config }) {
     )
   }
 
-  const enviado = await enviar(
-    sock,
+  // sock.sendPoll también deja registrada la encuesta para contar sus votos
+  const enviado = await sock.sendPoll(
     chatId,
-    {
-      poll: {
-        name: pregunta,
-        values: opciones,
-        selectableCount: multiple ? opciones.length : 1,
-      },
-    },
-    msg
+    pregunta,
+    opciones,
+    { selectableCount: multiple ? opciones.length : 1 },
+    { quoted: msg }
   )
+  guardarMensaje(enviado)
 
   // Se registra para mostrar el recuento cuando lleguen votos (ver lib/votos.js)
   registrarEncuesta(enviado.key.id, pregunta)

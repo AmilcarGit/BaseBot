@@ -8,7 +8,7 @@ import config from '../config.js'
 import { obtenerEncuesta } from '../lib/store.js'
 import { esOwner, identidadesDe, resolverIdentidades, textoDeMensaje } from '../lib/utils.js'
 import { esAdminGrupo } from '../lib/groupPermissions.js'
-import { textoResultados } from '../lib/votos.js'
+import { textoResultados, textoVotos, procesarVotos } from '../lib/votos.js'
 import { duracionEfimera, jidObjetivo, pngDegradado, wavTono } from '../lib/pruebas.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -111,6 +111,28 @@ function crearSock(resultados = {}) {
       enviados.push({ jid, contenido, opciones })
       return { key: { remoteJid: jid, id: `ID${enviados.length}`, fromMe: true }, message: { conversation: 'x' }, messageTimestamp: 1 }
     },
+    // helpers de Yui-Bails: el mismo contrato que los reales, apoyados en sendMessage
+    async getSender(m) {
+      return yui.getSenderIds(m, sock.user)
+    },
+    reply: (m, contenido, opciones) =>
+      sock.sendMessage(m.key.remoteJid, typeof contenido === 'string' ? { text: contenido } : contenido, { quoted: m, ...opciones }),
+    react: (m, emoji) => sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }),
+    sendButtons: (jid, { buttons, ...resto }, opciones) => sock.sendMessage(jid, { ...resto, buttons }, opciones),
+    sendList: (jid, { sections, ...resto }, opciones) =>
+      sock.sendMessage(
+        jid,
+        {
+          buttonText: 'Ver opciones',
+          ...resto,
+          sections: sections.map((sec) => ({ ...sec, rows: sec.rows.map(({ id, ...fila }) => ({ ...fila, rowId: id ?? fila.title })) })),
+        },
+        opciones
+      ),
+    sendPoll: (jid, name, values, poll = {}, opciones) =>
+      sock.sendMessage(jid, { poll: { name, values, selectableCount: 1, ...poll } }, opciones),
+    downloadMedia: async () => Buffer.alloc(2048),
+    queue: { size: 0, clear: () => 0 },
   }
   for (const [nombre, valor] of Object.entries(base)) {
     sock[nombre] = async (...args) => {
@@ -564,4 +586,57 @@ test('.editar, .escribiendo, .reaccion ruleta y .consulta presencia', async () =
   assert.deepEqual(presencia.llamadas.find((l) => l[0] === 'presenceSubscribe'), ['presenceSubscribe', OTRO])
   assert.equal(presencia.oyentes.get('presence.update')?.length ?? 0, 0, 'debe dejar de escuchar al terminar')
   assert.match(presencia.textos, /Sin cambios de presencia/)
+})
+
+// ---------- Helpers de Yui-Bails ----------
+
+test('.helpers yo: muestra número, ID interno y si es owner', async () => {
+  const { textos } = await ejecutar('helpers', 'yo')
+  assert.match(textos, /Número: \*51922222222\*/)
+  assert.match(textos, /Owner: \*sí\*/) // el arnés de pruebas ejecuta como owner
+
+  const alias = await ejecutar('yo')
+  assert.match(alias.textos, /Tu identidad/)
+})
+
+test('.helpers: reaccion, botones, lista, encuesta y descarga', async () => {
+  const r = await ejecutar('helpers', 'reaccion')
+  assert.equal(r.enviados[0].contenido.react.text, '🔥')
+
+  const b = await ejecutar('helpers', 'botones')
+  assert.equal(b.ultimo.buttons.length, 2)
+
+  const l = await ejecutar('helpers', 'lista')
+  assert.equal(l.ultimo.sections[0].rows.length, 2)
+
+  const e = await ejecutar('helpers', 'encuesta')
+  assert.equal(e.ultimo.poll.values.length, 3)
+  assert.ok(obtenerEncuesta('ID1'))
+
+  const sin = await ejecutar('helpers', 'descarga')
+  assert.match(sin.textos, /Responde a una imagen/)
+
+  const con = await ejecutar('helpers', 'descarga', { citado: { imageMessage: { mimetype: 'image/png' } } })
+  assert.match(con.textos, /2\.0 KB/)
+})
+
+test('.helpers cola y ayuda', async () => {
+  const cola = await ejecutar('helpers', 'cola')
+  assert.match(cola.textos, /3 mensajes/)
+  const ayuda = await ejecutar('helpers', 'otra')
+  assert.match(ayuda.textos, /helpers integrados/)
+})
+
+test('el recuento por evento poll.votes cuenta cada votante una vez', async () => {
+  const votes = [
+    { name: 'A', voters: ['u1', 'u2'] },
+    { name: 'B', voters: ['u3'] },
+  ]
+  const texto = textoVotos('¿Cuál?', votes)
+  assert.match(texto, /Votantes: 3/)
+  assert.match(texto, /███████░░░ 2/)
+
+  const { sock, enviados } = crearSock()
+  await procesarVotos(sock, { pollKey: { remoteJid: GRUPO, id: 'NO_REGISTRADA' }, pollName: 'x', votes })
+  assert.equal(enviados.length, 0, 'solo cuenta encuestas creadas por el bot')
 })

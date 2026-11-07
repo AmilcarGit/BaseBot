@@ -11,7 +11,7 @@ export default async function vistaUnica({ sock, chatId, msg, config }) {
   const tipo = citado ? tipoDeMedia(citado) : null
 
   if (tipo === 'imageMessage' || tipo === 'videoMessage') {
-    const buffer = await descargarMedia(citado)
+    const buffer = await descargarMedia(citado, sock)
     const clave = tipo === 'imageMessage' ? 'image' : 'video'
     return enviar(sock, chatId, { [clave]: buffer, caption: '👁️ Vista única', viewOnce: true }, msg)
   }
