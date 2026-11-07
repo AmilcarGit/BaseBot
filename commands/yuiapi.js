@@ -1,4 +1,16 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import { descargarMedia, obtenerMensajeCitado, tipoDeMedia } from '../lib/media.js'
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+try {
+  const env = readFileSync(resolve(root, '.env'), 'utf8')
+  for (const line of env.split(/\\r?\\n/)) {
+    const match = line.match(/^\\s*([A-Z0-9_]+)\\s*=\\s*(.*?)\\s*$/)
+    if (match && !process.env[match[1]]) process.env[match[1]] = match[2].replace(/^['\"]|['\"]$/g, '')
+  }
+} catch {}
 
 export const desc = 'Prueba todos los endpoints de YuiAPI desde WhatsApp: búsquedas, stickers, imágenes, archivos y herramientas'
 export const alias = ['api', 'yapi']
@@ -249,7 +261,7 @@ export default async function yuiapi({ sock, chatId, msg, args, config }) {
       let sticker = false
 
       if (accion === 'convertir') {
-        if (!['imageMessage', 'videoMessage', 'stickerMessage'].includes(file.type)) throw new Error('Responde a una imagen o GIF para convertirlo en sticker.')
+        if (!['imageMessage', 'stickerMessage', 'documentMessage'].includes(file.type) || (file.type === 'documentMessage' && !file.mimetype.includes('gif'))) throw new Error('Responde a una imagen, sticker WebP o GIF (como archivo) para convertirlo en sticker.')
         endpoint = '/api/v1/sticker'
         sticker = true
       } else if (accion === 'info') {
