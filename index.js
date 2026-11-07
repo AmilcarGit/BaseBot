@@ -11,7 +11,7 @@ import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
 import { info, warn, error as logError } from './lib/logger.js'
-import { guardarMensaje, obtenerMensaje } from './lib/store.js'
+import { guardarMensaje, marcarEnviado, obtenerMensaje } from './lib/store.js'
 import { procesarVotos } from './lib/votos.js'
 
 const logger = pino({ level: 'silent' })
@@ -70,6 +70,14 @@ async function iniciar() {
     // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
     sendQueue: colaAntiBan(),
   })
+
+  // Recuerda los ids de lo que envía el bot, para no confundirlo con comandos del número vinculado
+  const enviarOriginal = sock.sendMessage
+  sock.sendMessage = async (...args) => {
+    const enviado = await enviarOriginal(...args)
+    marcarEnviado(enviado?.key?.id)
+    return enviado
+  }
 
   // --- Solicitud del código de vinculación ---
   // Se dispara con el primer evento 'qr' (socket listo), con el número ya en mano.

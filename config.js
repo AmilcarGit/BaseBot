@@ -9,6 +9,11 @@ export default {
   // Prefijo de comandos (usa '' para que no requiera prefijo)
   prefijo: '.',
 
+  // true = el número vinculado al bot (la cuenta donde escaneaste el QR) también puede usar
+  // los comandos, escribiéndolos desde su WhatsApp (por ejemplo en "Mensaje a ti mismo") y
+  // se le trata como owner.
+  permitirNumeroDelBot: true,
+
   // Número del owner/dueño del bot (con código de país, sin +, sin espacios)
   owner: ['51910227479', '269715926691844'],
 

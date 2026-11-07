@@ -6,6 +6,7 @@ import config from './config.js'
 import { esOwner, normalizarJid, contenidoMensaje, textoDeMensaje, resolverIdentidades } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
+import { fueEnviadoPorElBot } from './lib/store.js'
 import { info, error as logError } from './lib/logger.js'
 import { autoResponder } from './lib/autoreply.js'
 
@@ -71,9 +72,21 @@ async function notificarErrorAlOwner(sock, err, comando) {
 
 export default async function handler(sock, m) {
   const msg = m.messages?.[0]
-  if (!msg?.message || msg.key.fromMe) return
+  if (!msg?.message) return
 
-  const jidRemitente = msg.key.participant || msg.key.remoteJid
+  // Mensajes del propio número vinculado: solo se aceptan comandos escritos a mano y recientes
+  // (no los que envía el bot, ni los antiguos que llegan al sincronizar).
+  const propio = !!msg.key.fromMe
+  if (propio) {
+    const reciente = Date.now() / 1000 - Number(msg.messageTimestamp || 0) < 60
+    // Lo que envía el propio bot llega como 'append' y con ids '3EB0…'; lo escrito en el teléfono, como 'notify'
+    const generadoPorLaLibreria = String(msg.key.id || '').startsWith('3EB0')
+    if (!config.permitirNumeroDelBot || m.type !== 'notify' || generadoPorLaLibreria) return
+    if (fueEnviadoPorElBot(msg.key.id) || !reciente) return
+    if (!textoDeMensaje(msg).startsWith(config.prefijo)) return
+  }
+
+  const jidRemitente = propio ? sock.user.id : msg.key.participant || msg.key.remoteJid
   const chatId = msg.key.remoteJid
 
   // Tracking simple en base de datos: cuenta mensajes por usuario.
@@ -116,7 +129,7 @@ export default async function handler(sock, m) {
 
   // WhatsApp puede identificarte con tu número o con un ID interno (@lid): se comparan ambos
   const identidades = await resolverIdentidades(sock, msg)
-  const esDueno = esOwner(identidades, config.owner)
+  const esDueno = propio || esOwner(identidades, config.owner)
 
   if (entrada.soloOwner && !esDueno) {
     const lid = identidades.find((j) => j.endsWith('@lid'))?.split('@')[0]

@@ -640,3 +640,12 @@ test('el recuento por evento poll.votes cuenta cada votante una vez', async () =
   await procesarVotos(sock, { pollKey: { remoteJid: GRUPO, id: 'NO_REGISTRADA' }, pollName: 'x', votes })
   assert.equal(enviados.length, 0, 'solo cuenta encuestas creadas por el bot')
 })
+
+test('el número vinculado al bot se reconoce con su propia cuenta, no con el chat', async () => {
+  const sock = { user: { id: BOT, lid: '999888777:5@lid' } }
+  const propio = { key: { remoteJid: OTRO, fromMe: true, id: 'X1' } } // escrito por el bot en el chat de OTRO
+  const ids = await resolverIdentidades(sock, propio)
+  assert.deepEqual(ids, [BOT_LIMPIO, '999888777@lid'])
+  assert.equal(esOwner(ids, ['51911111111']), true)
+  assert.equal(esOwner(ids, ['51933333333']), false, 'no hereda la identidad del otro chat')
+})
