@@ -595,8 +595,8 @@ test('.helpers yo: muestra número, ID interno y si es owner', async () => {
   assert.match(textos, /Número: \*51922222222\*/)
   assert.match(textos, /Owner: \*sí\*/) // el arnés de pruebas ejecuta como owner
 
-  const alias = await ejecutar('yo')
-  assert.match(alias.textos, /Tu identidad/)
+  const porDefecto = await ejecutar('helpers') // sin subcomando (como `.yo`) muestra la identidad
+  assert.match(porDefecto.textos, /Tu identidad/)
 })
 
 test('.helpers: reaccion, botones, lista, encuesta y descarga', async () => {

@@ -2,7 +2,7 @@ import { registrarEncuesta, guardarMensaje } from '../lib/store.js'
 import { obtenerMensajeCitado, tipoDeMedia } from '../lib/media.js'
 
 export const desc = 'Prueba los helpers de Yui-Bails: getSender, reply, react, botones, lista, encuesta, descarga y cola anti-ban'
-export const alias = ['helpers', 'yo']
+export const alias = ['yo']
 export const categoria = 'prueba'
 export const cooldown = 3
 
