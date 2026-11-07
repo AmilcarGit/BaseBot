@@ -26,6 +26,7 @@
 - [Instalación rápida](#-instalación-rápida)
 - [Estructura del proyecto](#-estructura-del-proyecto)
 - [Configuración](#-configuración)
+- [Integración con YuiAPI](#-integración-con-yuiapi)
 - [Comandos incluidos](#-comandos-incluidos)
 - [Comandos de prueba de Yui-Bails](#-comandos-de-prueba-de-yui-bails)
 - [Cómo agregar un comando nuevo](#-cómo-agregar-un-comando-nuevo)
@@ -130,6 +131,56 @@ Todo se controla desde `config.js`:
 | `maxReconnectDelay` | Tope de espera entre reintentos (ms) | `300000` |
 
 ---
+
+## 🌸 Integración con YuiAPI
+
+BaseBot incluye el comando \`.yuiapi\` para probar desde WhatsApp los endpoints de [YuiAPI](https://yuiapi.vercel.app). La clave se carga desde un archivo local \`.env\`; **nunca la escribas directamente en un comando, en \`config.js\` ni en el repositorio**.
+
+### Configurar la clave
+
+\`\`\`bash
+cp .env.example .env
+nano .env
+\`\`\`
+
+En \`.env\`, reemplaza el texto de ejemplo por tu propia clave:
+
+\`\`\`env
+YUIAPI_KEY=TU_CLAVE_YUIAPI
+YUIAPI_BASE_URL=https://yuiapi.vercel.app
+\`\`\`
+
+Guarda el archivo y reinicia BaseBot con \`npm start\`. El archivo \`.env\` ya está excluido por \`.gitignore\`; no lo subas a GitHub.
+
+### Comandos disponibles
+
+| Comando | Función |
+|---|---|
+| \`.yuiapi stickers <texto>\` | Busca stickers y los envía al chat |
+| \`.yuiapi musica <texto>\` | Busca canciones |
+| \`.yuiapi anime <texto>\` | Busca anime |
+| \`.yuiapi wiki <texto>\` | Busca artículos de Wikipedia |
+| \`.yuiapi libros <texto>\` | Busca libros |
+| \`.yuiapi imagenes <texto>\` | Busca imágenes |
+| \`.yuiapi convertir\` | Convierte una imagen/GIF citado a sticker WebP |
+| \`.yuiapi resize <ancho> <alto>\` | Redimensiona una imagen citada |
+| \`.yuiapi compress [calidad]\` | Comprime una imagen citada |
+| \`.yuiapi convert <png\|jpeg\|webp>\` | Convierte el formato de una imagen |
+| \`.yuiapi blur [intensidad]\` | Desenfoca una imagen |
+| \`.yuiapi info\` | Consulta metadatos de un archivo citado |
+| \`.yuiapi base64file\` | Convierte un archivo citado a Base64 |
+| \`.yuiapi qr <texto>\` | Genera un QR |
+| \`.yuiapi hash <texto> [algoritmo]\` | Calcula un hash |
+| \`.yuiapi uuid [cantidad]\` | Genera UUID |
+| \`.yuiapi password [largo]\` | Genera una contraseña |
+| \`.yuiapi base64 encode\|decode <texto>\` | Codifica o decodifica Base64 |
+| \`.yuiapi json-format <json>\` / \`.yuiapi json-validate <json>\` | Formatea o valida JSON |
+| \`.yuiapi url-encode <texto>\` / \`.yuiapi url-decode <texto>\` | Codifica o decodifica texto URL |
+| \`.yuiapi me\` | Consulta tu plan y cuota |
+
+También puedes usar \`.api\` o \`.yapi\` como alias. Escribe \`.yuiapi ayuda\` para ver la ayuda desde WhatsApp.
+
+**Importante:** las búsquedas de stickers requieren que YuiAPI tenga configurada su clave de GIPHY. Los endpoints de imágenes aceptan PNG, JPG y WebP estáticos; para GIF usa \`.yuiapi convertir\`. Los límites y cuotas de tu cuenta YuiAPI siguen aplicándose. La integración usa la API remota, por lo que necesita conexión a Internet.
 
 ## 🧾 Comandos incluidos
 
