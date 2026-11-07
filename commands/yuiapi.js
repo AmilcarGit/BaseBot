@@ -6,8 +6,8 @@ import { descargarMedia, obtenerMensajeCitado, tipoDeMedia } from '../lib/media.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 try {
   const env = readFileSync(resolve(root, '.env'), 'utf8')
-  for (const line of env.split(/\\r?\\n/)) {
-    const match = line.match(/^\\s*([A-Z0-9_]+)\\s*=\\s*(.*?)\\s*$/)
+  for (const line of env.split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/)
     if (match && !process.env[match[1]]) process.env[match[1]] = match[2].replace(/^['\"]|['\"]$/g, '')
   }
 } catch {}
@@ -17,7 +17,7 @@ export const alias = ['api', 'yapi']
 export const categoria = 'api'
 export const cooldown = 3
 
-const BASE = (process.env.YUIAPI_BASE_URL || 'https://yuiapi.vercel.app').replace(/\\/+$/, '')
+const BASE = (process.env.YUIAPI_BASE_URL || 'https://yuiapi.vercel.app').replace(/\/+$/, '')
 const KEY = process.env.YUIAPI_KEY
 
 const AYUDA = (p) => `🌸 *YuiAPI · Integración de BaseBot*
@@ -58,7 +58,7 @@ const AYUDA = (p) => `🌸 *YuiAPI · Integración de BaseBot*
 
 function textoSeguro(value, max = 3500) {
   const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
-  return text.length > max ? text.slice(0, max - 30) + '\\n… (respuesta recortada)' : text
+  return text.length > max ? text.slice(0, max - 30) + '\n… (respuesta recortada)' : text
 }
 
 async function pedir(path, options = {}) {
@@ -109,7 +109,7 @@ function resumen(data) {
 }
 
 async function enviarBinario(sock, chatId, result, caption = '') {
-  const extra = result.remaining !== null ? '\\n📊 Solicitudes restantes hoy: ' + result.remaining : ''
+  const extra = result.remaining !== null ? '\n📊 Solicitudes restantes hoy: ' + result.remaining : ''
   if (result.contentType === 'image/webp' && caption === 'sticker') {
     await sock.sendMessage(chatId, { sticker: result.buffer })
   } else if (result.contentType.startsWith('image/')) {
@@ -155,7 +155,7 @@ async function buscar(sock, chatId, tipo, termino) {
       } catch {}
     }
     await sock.sendMessage(chatId, {
-      text: `🔎 *Stickers: ${termino}*\\nEncontrados: ${lista.length} · Enviados: ${enviados}\\nPowered by GIPHY${result.remaining !== null ? '\\n📊 Restantes hoy: ' + result.remaining : ''}`,
+      text: `🔎 *Stickers: ${termino}*\nEncontrados: ${lista.length} · Enviados: ${enviados}\nPowered by GIPHY${result.remaining !== null ? '\n📊 Restantes hoy: ' + result.remaining : ''}`,
     })
     return
   }
@@ -164,10 +164,10 @@ async function buscar(sock, chatId, tipo, termino) {
     const titulo = item.title || item.trackName || 'Resultado ' + (i + 1)
     const detalle = [item.artist || item.authors?.join(', ') || item.description || item.genre, item.year || item.firstPublishYear, item.score ? '⭐ ' + item.score : null].filter(Boolean).join(' · ')
     const enlace = item.url || item.page
-    return `* ${i + 1}. ${titulo}\\n${detalle ? detalle + '\\n' : ''}${enlace || ''}`
+    return `* ${i + 1}. ${titulo}\n${detalle ? detalle + '\n' : ''}${enlace || ''}`
   })
   await sock.sendMessage(chatId, {
-    text: `🔎 *YuiAPI · ${tipo}*\\nConsulta: ${termino}\\n\\n${lineas.join('\\n\\n')}${result.remaining !== null ? '\\n\\n📊 Solicitudes restantes hoy: ' + result.remaining : ''}`,
+    text: `🔎 *YuiAPI · ${tipo}*\nConsulta: ${termino}\n\n${lineas.join('\n\n')}${result.remaining !== null ? '\n\n📊 Solicitudes restantes hoy: ' + result.remaining : ''}`,
   })
 
   const visual = lista.find((item) => item.thumbnail || item.image || item.cover)
@@ -217,7 +217,7 @@ export default async function yuiapi({ sock, chatId, msg, args, config }) {
 
     if (accion === 'me') {
       const r = await pedir('/api/v1/me')
-      return sock.sendMessage(chatId, { text: '👤 *Tu cuenta YuiAPI*\\n' + resumen(r.data) + (r.remaining !== null ? '\\n\\n📊 Restantes hoy: ' + r.remaining : '') }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '👤 *Tu cuenta YuiAPI*\n' + resumen(r.data) + (r.remaining !== null ? '\n\n📊 Restantes hoy: ' + r.remaining : '') }, { quoted: msg })
     }
 
     if (accion === 'qr') {
@@ -232,26 +232,26 @@ export default async function yuiapi({ sock, chatId, msg, args, config }) {
       const algo = algos.includes(rest.at(-1)?.toLowerCase()) ? rest.pop().toLowerCase() : 'sha256'
       const value = rest.join(' ')
       const r = await pedir(query('/api/v1/tools/hash', { text: value, algo }))
-      return sock.sendMessage(chatId, { text: '🔐 *Hash ' + algo + '*\\n' + resumen(r.data) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '🔐 *Hash ' + algo + '*\n' + resumen(r.data) }, { quoted: msg })
     }
 
     if (accion === 'uuid' || accion === 'password') {
       const n = Number.parseInt(rest[0] || '', 10)
       const r = await pedir(query('/api/v1/tools/' + accion, accion === 'uuid' ? { count: n || 1 } : { length: n || 20, symbols: true }))
-      return sock.sendMessage(chatId, { text: (accion === 'uuid' ? '🆔 *UUID generados*\\n' : '🔐 *Contraseña generada*\\n') + resumen(r.data) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: (accion === 'uuid' ? '🆔 *UUID generados*\n' : '🔐 *Contraseña generada*\n') + resumen(r.data) }, { quoted: msg })
     }
 
     if (accion === 'base64') {
       const [mode, ...parts] = rest
       if (!['encode', 'decode'].includes((mode || '').toLowerCase()) || !parts.length) throw new Error('Uso: .yuiapi base64 encode|decode <texto>')
       const r = await pedir(query('/api/v1/tools/base64', { mode: mode.toLowerCase(), text: parts.join(' ') }))
-      return sock.sendMessage(chatId, { text: '🔤 *Base64*\\n' + resumen(r.data) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '🔤 *Base64*\n' + resumen(r.data) }, { quoted: msg })
     }
 
     if (['json-format', 'json-validate', 'url-encode', 'url-decode'].includes(accion)) {
       if (!texto) throw new Error('Falta el texto que quieres procesar.')
       const r = await pedir(query('/api/v1/tools/' + accion, { text: texto }))
-      return sock.sendMessage(chatId, { text: '🧰 *' + accion + '*\\n' + resumen(r.data) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '🧰 *' + accion + '*\n' + resumen(r.data) }, { quoted: msg })
     }
 
     if (['convertir', 'info', 'base64file', 'resize', 'compress', 'convert', 'blur'].includes(accion)) {
@@ -299,7 +299,7 @@ export default async function yuiapi({ sock, chatId, msg, args, config }) {
       if (r.kind === 'binary') {
         return enviarBinario(sock, chatId, r, sticker ? 'sticker' : 'Resultado procesado por YuiAPI')
       }
-      return sock.sendMessage(chatId, { text: '📦 *Resultado del archivo*\\n' + resumen(r.data) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '📦 *Resultado del archivo*\n' + resumen(r.data) }, { quoted: msg })
     }
 
     throw new Error('Subcomando no reconocido. Escribe ' + p + 'yuiapi ayuda')
