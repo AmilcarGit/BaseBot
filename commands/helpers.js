@@ -31,7 +31,7 @@ export default async function helpers({ sock, chatId, msg, args, config, esDueno
         `▢ ID interno (LID): *${s.id || 'desconocido'}*`,
         `▢ JID: ${s.jid}`,
         `▢ Chat: ${s.isGroup ? 'grupo' : 'privado'}`,
-        `▢ Owner: *${esDueno ? 'sí' : 'no'}* (${s.is(config.owner) ? 'coincide con config.owner' : 'no está en config.owner'})`,
+        `▢ Owner: *${esDueno ? 'sí' : 'no'}* (${msg.key.fromMe ? 'cuenta vinculada al bot' : s.is(config.owner) ? 'coincide con config.owner' : 'no está en config.owner'})`,
       ].join('\n')
     )
   }
