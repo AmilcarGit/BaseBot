@@ -299,6 +299,14 @@ export default async function yuiapi({ sock, chatId, msg, args, config }) {
       if (r.kind === 'binary') {
         return enviarBinario(sock, chatId, r, sticker ? 'sticker' : 'Resultado procesado por YuiAPI')
       }
+      if (accion === 'base64file' && r.data.base64) {
+        return sock.sendMessage(chatId, {
+          document: Buffer.from(r.data.base64, 'utf8'),
+          mimetype: 'text/plain',
+          fileName: file.filename + '.base64.txt',
+          caption: '📄 Base64 completo del archivo · ' + r.data.bytes + ' bytes',
+        }, { quoted: msg })
+      }
       return sock.sendMessage(chatId, { text: '📦 *Resultado del archivo*\n' + resumen(r.data) }, { quoted: msg })
     }
 
