@@ -116,6 +116,7 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
             { title: 'Clima · Lima', description: 'Consultar condiciones actuales', id: p + 'endpoints weather Lima' },
             { title: 'Traducir · Hola', description: 'Traducir al inglés', id: p + 'endpoints translate en hola' },
             { title: 'USD a PEN', description: 'Convertir 10 dólares a soles', id: p + 'endpoints exchange USD PEN 10' },
+            { title: 'Mi cuenta y cuota', description: 'Consultar plan y solicitudes restantes', id: p + 'endpoints me' },
           ],
         }],
       }],
@@ -135,6 +136,8 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
           { title: 'Buscar stickers', description: 'Buscar stickers en Giphy', id: p + 'endpoints search stickers gatos' },
           { title: 'Descargar Pinterest', description: 'Ver instrucciones para pegar un enlace', id: p + 'endpoints ayuda' },
           { title: 'Convertir imagen a sticker', description: 'Responde a una imagen con el comando', id: p + 'endpoints ayuda' },
+          { title: 'Texto a sticker', description: 'Generar un sticker WebP con texto', id: p + 'endpoints sticker-text Hola mundo' },
+          { title: 'Quitar fondo', description: 'Responde a una imagen con el comando', id: p + 'endpoints ayuda' },
         ],
       }],
     }],
@@ -229,6 +232,37 @@ export default async function endpoints({ sock, chatId, msg, args, config }) {
         tool === 'base64' ? { text: value, mode: 'encode' } : { text: value }
       const result = await yuiapiRequest(yuiapiQuery('/api/v1/tools/' + tool, params))
       return enviarResultado(sock, chatId, result, 'Resultado · ' + tool, msg)
+    }
+
+    if (action === 'me') {
+      const result = await yuiapiRequest('/api/v1/me')
+      return sock.sendMessage(chatId, {
+        text: '👤 *Cuenta YuiAPI*\\n' + JSON.stringify(result.data, null, 2).slice(0, 2500),
+      }, { quoted: msg })
+    }
+
+    if (action === 'sticker-text' || action === 'texto-sticker') {
+      if (!text) throw new Error('Uso: ' + p + 'endpoints sticker-text <texto>')
+      const result = await yuiapiRequest(yuiapiQuery('/api/v1/sticker/text', {
+        text,
+        color: 'ff4fa3',
+        outline: 'ffffff',
+      }))
+      return enviarResultado(sock, chatId, result, 'sticker', msg)
+    }
+
+    if (action === 'remove-bg' || action === 'quitar-fondo') {
+      const quoted = obtenerMensajeCitado(msg)
+      if (!quoted) throw new Error('Responde a una imagen con ' + p + 'endpoints remove-bg')
+      const type = tipoDeMedia(quoted)
+      if (type !== 'imageMessage') throw new Error('Quitar fondo admite imágenes PNG, JPG o WebP.')
+      const buffer = await descargarMedia(quoted, sock)
+      const result = await yuiapiRequest('/api/v1/sticker/remove-bg?format=webp', {
+        method: 'POST',
+        headers: { 'content-type': quoted.message[type]?.mimetype || 'image/jpeg' },
+        body: buffer,
+      })
+      return enviarResultado(sock, chatId, result, 'sticker', msg)
     }
 
     if (action === 'pinterest' || action === 'download') {
