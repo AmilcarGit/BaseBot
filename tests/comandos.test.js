@@ -298,6 +298,32 @@ test('.pruebas lista los comandos de prueba con un desplegable de máximo 10 fil
   assert.ok(filas.every((f) => f.id.startsWith('.') && f.description.length <= 72))
 })
 
+test('.endpoints: menús de YuiAPI generan botones nativos válidos', async () => {
+  const principal = await ejecutar('endpoints')
+  assert.equal(principal.ultimo.buttons.length, 3)
+
+  const busquedas = await ejecutar('endpoints', 'search')
+  assert.ok(busquedas.ultimo.buttons[0].sections[0].rows.length <= 10)
+
+  const masBusquedas = await ejecutar('endpoints', 'search2')
+  assert.ok(masBusquedas.ultimo.buttons[0].sections[0].rows.length <= 10)
+
+  const herramientas = await ejecutar('endpoints', 'tools')
+  assert.ok(herramientas.ultimo.buttons.length <= 3)
+
+  const servicios = await ejecutar('endpoints', 'services')
+  assert.equal(servicios.ultimo.buttons[0].sections[0].rows.length, 4)
+
+  const multimedia = await ejecutar('endpoints', 'media')
+  assert.ok(multimedia.ultimo.buttons[0].sections[0].rows.length >= 5)
+})
+
+test('.yts muestra instrucciones antes de realizar una búsqueda', async () => {
+  const ayuda = await ejecutar('yts')
+  assert.match(ayuda.textos, /YouTube/)
+  assert.match(ayuda.textos, /audio o video/)
+})
+
 test('.botones: nativos, clásico e imagen generan mensajes válidos', async () => {
   const nativos = await ejecutar('botones')
   const tipos = nativos.ultimo.buttons.map((b) => Object.keys(b).filter((k) => k !== 'text')[0])
