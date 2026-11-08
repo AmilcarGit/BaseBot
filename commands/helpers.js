@@ -1,5 +1,6 @@
-import { registrarEncuesta, guardarMensaje } from '../lib/store.js'
 import { obtenerMensajeCitado, tipoDeMedia } from '../lib/media.js'
+import { pngDegradado } from '../lib/pruebas.js'
+import { guardarMensaje, registrarEncuesta } from '../lib/store.js'
 
 export const desc = 'Prueba los helpers de Yui-Bails: getSender, reply, react, botones, lista, encuesta, descarga y cola anti-ban'
 export const alias = ['yo']
@@ -12,7 +13,11 @@ const AYUDA = (p) => `🧰 *${p}helpers* — helpers integrados de Yui-Bails
 ▢ *botones* · *lista* — sock.sendButtons / sock.sendList
 ▢ *encuesta* — sock.sendPoll con recuento de votos
 ▢ *descarga* — responde a una imagen/video/audio: sock.downloadMedia
-▢ *cola* — envía 3 mensajes seguidos y mide la cola anti-ban`
+▢ *cola* — envía 3 mensajes seguidos y mide la cola anti-ban
+▢ *carrusel* — tarjetas deslizables con imagen y botones (sock.sendCarousel)
+▢ *unavez* — botones que solo cuentan el primer toque (onButton once)
+▢ *preguntar* — el bot te pregunta y espera tu respuesta (awaitReply)
+▢ *ia* — mensaje con el icono de IA (ai: true)`
 
 export default async function helpers({ sock, chatId, msg, args, config, esDueno }) {
   const p = config.prefijo
@@ -104,6 +109,53 @@ export default async function helpers({ sock, chatId, msg, args, config, esDueno
       ? `cola *activa* (había ${enEspera} esperando al inicio)`
       : 'cola *desactivada* (config.antiBan.activa = false)'
     return sock.reply(msg, `⏱️ 3 mensajes en ${segundos}s — ${estado}`)
+  }
+
+  if (accion === 'carrusel') {
+    const colores = [
+      ['Turquesa', [0, 229, 255], [0, 80, 140]],
+      ['Rosa', [247, 37, 133], [90, 10, 80]],
+      ['Violeta', [157, 78, 221], [30, 20, 90]],
+    ]
+    return sock.sendCarousel(
+      chatId,
+      {
+        text: '🛍️ Enviado con *sock.sendCarousel*',
+        footer: config.nombreBot,
+        cards: colores.map(([nombre, desde, hasta]) => ({
+          image: pngDegradado(320, 180, desde, hasta),
+          title: nombre,
+          body: `Tarjeta de color ${nombre.toLowerCase()}`,
+          buttons: [{ id: `carrusel_${nombre.toLowerCase()}`, text: `Elegir ${nombre}` }],
+        })),
+      },
+      { quoted: msg }
+    )
+  }
+
+  if (accion === 'unavez') {
+    return sock.sendButtons(
+      chatId,
+      {
+        text: '☝️ Toca el botón: solo el *primer* toque cuenta, los demás reciben un aviso.',
+        footer: config.nombreBot,
+        buttons: [{ id: 'demo_unavez', text: 'Tocar' }],
+      },
+      { quoted: msg }
+    )
+  }
+
+  if (accion === 'preguntar') {
+    await sock.reply(msg, '✍️ ¿Cómo te llamas? (tienes 30 segundos)')
+    const respuesta = await sock.awaitReply(msg, { timeoutMs: 30_000 })
+    if (!respuesta) return sock.reply(msg, '⏱️ Se acabó el tiempo.')
+
+    const nombre = respuesta.message?.conversation || respuesta.message?.extendedTextMessage?.text || 'amigo'
+    return sock.reply(respuesta, `👋 Mucho gusto, *${nombre}*.`)
+  }
+
+  if (accion === 'ia') {
+    return sock.sendMessage(chatId, { text: '🤖 Este mensaje lleva el icono de IA (ai: true).', ai: true }, { quoted: msg })
   }
 
   return sock.reply(msg, AYUDA(p))

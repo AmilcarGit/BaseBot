@@ -11,6 +11,7 @@ import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
 import { info, warn, error as logError } from './lib/logger.js'
+import { registrarRespuestas } from './lib/respuestas.js'
 import { guardarMensaje, marcarEnviado, obtenerMensaje } from './lib/store.js'
 import { procesarVotos } from './lib/votos.js'
 
@@ -150,6 +151,9 @@ async function iniciar() {
   })
 
   sock.ev.on('creds.update', saveCreds)
+
+  // respuestas a botones con onButton (ver lib/respuestas.js)
+  registrarRespuestas(sock)
 
   sock.ev.on('messages.upsert', async (m) => {
     for (const mensaje of m.messages || []) guardarMensaje(mensaje)

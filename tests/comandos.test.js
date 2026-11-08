@@ -8,6 +8,7 @@ import config from '../config.js'
 import { obtenerEncuesta } from '../lib/store.js'
 import { esOwner, identidadesDe, resolverIdentidades, textoDeMensaje } from '../lib/utils.js'
 import { esAdminGrupo } from '../lib/groupPermissions.js'
+import { registrarRespuestas } from '../lib/respuestas.js'
 import { textoResultados, textoVotos, procesarVotos } from '../lib/votos.js'
 import { duracionEfimera, jidObjetivo, pngDegradado, wavTono } from '../lib/pruebas.js'
 
@@ -131,6 +132,8 @@ function crearSock(resultados = {}) {
       ),
     sendPoll: (jid, name, values, poll = {}, opciones) =>
       sock.sendMessage(jid, { poll: { name, values, selectableCount: 1, ...poll } }, opciones),
+    sendCarousel: (jid, { cards, ...resto }, opciones) => sock.sendMessage(jid, { ...resto, carousel: cards }, opciones),
+    awaitReply: async () => ({ key: { remoteJid: GRUPO, id: 'R1' }, message: { conversation: 'Amilcar' } }),
     downloadMedia: async () => Buffer.alloc(2048),
     queue: { size: 0, clear: () => 0 },
   }
@@ -648,4 +651,33 @@ test('el número vinculado al bot se reconoce con su propia cuenta, no con el ch
   assert.deepEqual(ids, [BOT_LIMPIO, '999888777@lid'])
   assert.equal(esOwner(ids, ['51911111111']), true)
   assert.equal(esOwner(ids, ['51933333333']), false, 'no hereda la identidad del otro chat')
+})
+
+test('.helpers carrusel: tarjetas con imagen y botones que WhatsApp acepta', async () => {
+  const { ultimo } = await ejecutar('helpers', 'carrusel')
+  assert.equal(ultimo.carousel.length, 3)
+  assert.ok(ultimo.carousel.every((c) => c.image && c.buttons.length === 1))
+})
+
+test('.helpers unavez, preguntar e ia', async () => {
+  const unavez = await ejecutar('helpers', 'unavez')
+  assert.equal(unavez.ultimo.buttons[0].id, 'demo_unavez')
+
+  const preguntar = await ejecutar('helpers', 'preguntar')
+  assert.match(preguntar.textos, /¿Cómo te llamas\?/)
+  assert.match(preguntar.textos, /Mucho gusto, \*Amilcar\*/)
+
+  const ia = await ejecutar('helpers', 'ia')
+  assert.equal(ia.ultimo.ai, true)
+})
+
+test('registrarRespuestas registra los botones y no falla con una librería vieja', () => {
+  const registros = []
+  registrarRespuestas({ onButton: (matcher, fn, opciones) => registros.push({ matcher, fn, opciones }), reply: async () => {} })
+  assert.equal(registros.length, 2)
+  assert.equal(registros[0].matcher, 'demo_unavez')
+  assert.equal(registros[0].opciones.once, true)
+  assert.ok(registros[1].matcher.test('carrusel_rosa'))
+
+  registrarRespuestas({}) // sin onButton: no hace nada
 })
