@@ -34,7 +34,7 @@ async function descargar(sock, chatId, msg, url) {
   return enviarResultado(sock, chatId, result, '📌 Descarga de Pinterest', msg)
 }
 
-async function buscar(sock, chatId, msg, query) {
+async function buscar(sock, chatId, msg, query, p) {
   if (!query) throw new Error('Escribe qué quieres buscar. Ejemplo: .pinterest buscar fondos anime')
   const result = await yuiapiRequest(yuiapiQuery('/api/v1/search/pinterest', { q: query, limit: 5 }))
   const items = result.data?.results || []
@@ -53,7 +53,7 @@ async function buscar(sock, chatId, msg, query) {
   const pinUrl = first?.url || first?.page
   const buttons = esUrlPinterest(pinUrl) ? [{
     text: '⬇️ Descargar primer Pin',
-    id: (msg.prefix || '.') + 'pinterest descargar ' + pinUrl,
+    id: p + 'pinterest descargar ' + pinUrl,
   }] : []
 
   await sock.sendMessage(chatId, {
@@ -84,7 +84,7 @@ export default async function pinterest({ sock, chatId, msg, args, config }) {
     }
 
     if (['buscar', 'search'].includes(action)) {
-      return buscar(sock, chatId, msg, value)
+      return buscar(sock, chatId, msg, value, p)
     }
 
     if (['descargar', 'download', 'dl'].includes(action)) {
@@ -94,7 +94,7 @@ export default async function pinterest({ sock, chatId, msg, args, config }) {
     const direct = [actionRaw, ...rest].join(' ').trim()
     if (esUrlPinterest(direct)) return descargar(sock, chatId, msg, direct)
 
-    return buscar(sock, chatId, msg, [actionRaw, ...rest].join(' ').trim())
+    return buscar(sock, chatId, msg, [actionRaw, ...rest].join(' ').trim(), p)
   } catch (error) {
     return sock.sendMessage(chatId, {
       text: '❌ *Pinterest:* ' + (error?.message || 'No se pudo completar la solicitud.'),
