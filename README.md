@@ -182,6 +182,26 @@ También puedes usar \`.api\` o \`.yapi\` como alias. Escribe \`.yuiapi ayuda\` 
 
 **Importante:** las búsquedas de stickers requieren que YuiAPI tenga configurada su clave de GIPHY. Los endpoints de imágenes aceptan PNG, JPG y WebP estáticos; para GIF usa \`.yuiapi convertir\`. Los límites y cuotas de tu cuenta YuiAPI siguen aplicándose. La integración usa la API remota, por lo que necesita conexión a Internet.
 
+### Menú de botones y nuevas rutas
+
+Escribe `.endpoints` para abrir el panel interactivo de YuiAPI. Los botones nativos de Yui-Bails ejecutan los comandos directamente al tocarlos.
+
+| Comando | Función |
+|---|---|
+| `.endpoints` | Menú principal con botones |
+| `.endpoints search <tipo> <consulta>` | Busca en music, anime, wiki, books, images, shows, characters, countries, papers, ebooks, youtube, pinterest y stickers |
+| `.endpoints weather <ciudad>` | Clima actual y pronóstico |
+| `.endpoints translate <idioma> <texto>` | Traducción de texto |
+| `.endpoints exchange <origen> <destino> <cantidad>` | Conversión de divisas |
+| `.endpoints pinterest <URL>` | Descarga un Pin público |
+| `.endpoints sticker` | Responde a una imagen/GIF para convertirlo a WebP |
+| `.yts <consulta>` | Busca videos de YouTube y abre un desplegable para elegir audio o video |
+| `.yts audio <id>` / `.yts video <id>` | Descarga el audio o el video seleccionado |
+
+BaseBot limita los archivos descargados a 45 MB para evitar agotar la memoria de Termux. El video se solicita en 720p. La disponibilidad depende de YuiAPI, sus proveedores y los límites de WhatsApp. Los endpoints protegidos necesitan `YUIAPI_KEY`; la búsqueda de stickers también requiere que el servidor YuiAPI tenga `GIPHY_API_KEY`.
+
+---
+
 ## 🧾 Comandos incluidos
 
 | Comando | Descripción |
