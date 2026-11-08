@@ -15,7 +15,7 @@ import { registrarRespuestas } from './lib/respuestas.js'
 import { guardarMensaje, marcarEnviado, obtenerMensaje } from './lib/store.js'
 import { procesarVotos } from './lib/votos.js'
 
-const logger = pino({ level: 'silent' })
+const logger = pino({ level: process.env.LOG_LEVEL || 'warn' })
 
 /** Opciones de la cola anti-ban a partir de config.antiBan (false = sin cola). */
 function colaAntiBan() {
