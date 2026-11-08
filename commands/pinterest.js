@@ -1,7 +1,7 @@
 import { enviarResultado, yuiapiQuery, yuiapiRequest } from '../lib/yuiapi-client.js'
 
 export const desc = 'Busca contenido de Pinterest y descarga imágenes o videos desde enlaces de Pins'
-export const alias = ['pin', 'pindl']
+export const alias = ['pindl']
 export const categoria = 'api'
 export const cooldown = 5
 
