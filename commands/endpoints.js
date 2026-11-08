@@ -8,7 +8,7 @@ export const cooldown = 3
 
 const SEARCH_KINDS = [
   'music', 'anime', 'wiki', 'books', 'images', 'shows',
-  'characters', 'countries', 'papers', 'ebooks', 'youtube', 'pinterest',
+  'characters', 'countries', 'papers', 'ebooks', 'youtube', 'pinterest', 'stickers',
 ]
 
 const SEARCH_LABELS = {
@@ -24,6 +24,7 @@ const SEARCH_LABELS = {
   ebooks: '📚 Libros públicos',
   youtube: '▶️ YouTube',
   pinterest: '📌 Pinterest',
+  stickers: '🌸 Stickers Giphy',
 }
 
 const help = (p) => `🌸 *YuiAPI · Panel de endpoints*
@@ -52,15 +53,15 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
     }, { quoted: msg })
   }
 
-  if (categoria === 'search') {
+  if (categoria === 'search' || categoria === 'search2') {
     return sock.sendMessage(chatId, {
-      text: '🔎 *Búsquedas disponibles*\\nSelecciona una prueba. Para una búsqueda propia usa: ' + p + 'endpoints search <tipo> <texto>',
+      text: '🔎 *Búsquedas disponibles*\nSelecciona una prueba. Para una búsqueda propia usa: ' + p + 'endpoints search <tipo> <texto>',
       footer: 'YuiAPI Search',
       buttons: [{
         text: 'Abrir buscadores',
         sections: [{
           title: 'Buscadores',
-          rows: SEARCH_KINDS.map((kind) => ({
+          rows: (categoria === 'search' ? SEARCH_KINDS.slice(0, 6) : SEARCH_KINDS.slice(6)).map((kind) => ({
             title: SEARCH_LABELS[kind],
             description: 'Prueba el endpoint ' + kind,
             id: p + 'endpoints search ' + kind + ' ' + (kind === 'anime' ? 'Naruto' : kind === 'pinterest' ? 'anime' : kind === 'youtube' ? 'musica relajante' : 'Peru'),
@@ -72,7 +73,7 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
 
   if (categoria === 'tools') {
     return sock.sendMessage(chatId, {
-      text: '🧰 *Utilidades YuiAPI*\\nPrueba cada endpoint con los botones o escribe tu propio comando.',
+      text: '🧰 *Utilidades YuiAPI*\nPrueba cada endpoint con los botones o escribe tu propio comando.',
       footer: 'YuiAPI Tools',
       buttons: [{
         text: 'Herramientas',
@@ -85,6 +86,11 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
             { title: 'Contraseña', description: 'Generar contraseña segura', id: p + 'endpoints tool password' },
             { title: 'Base64', description: 'Codificar texto', id: p + 'endpoints tool base64 hola' },
             { title: 'JSON', description: 'Validar JSON de ejemplo', id: p + 'endpoints tool json-validate {"ok":true}' },
+            { title: 'URL Encode', description: 'Codificar una URL', id: p + 'endpoints tool url-encode hola mundo' },
+            { title: 'URL Decode', description: 'Decodificar una URL', id: p + 'endpoints tool url-decode hola%20mundo' },
+            { title: 'Clima', description: 'Consultar clima de Lima', id: p + 'endpoints weather Lima' },
+            { title: 'Traductor', description: 'Traducir hola al inglés', id: p + 'endpoints translate en hola' },
+            { title: 'Tipo de cambio', description: 'Convertir 10 USD a PEN', id: p + 'endpoints exchange USD PEN 10' },
           ],
         }],
       }],
@@ -92,7 +98,7 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
   }
 
   return sock.sendMessage(chatId, {
-    text: '📦 *Multimedia YuiAPI*\\nUsa los botones para iniciar pruebas de búsqueda o descarga.',
+    text: '📦 *Multimedia YuiAPI*\nUsa los botones para iniciar pruebas de búsqueda o descarga.',
     footer: 'YuiAPI Media',
     buttons: [{
       text: 'Pruebas multimedia',
@@ -101,6 +107,7 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
         rows: [
           { title: 'Buscar YouTube', description: 'Abrir búsqueda yts', id: p + 'yts musica relajante' },
           { title: 'Buscar Pinterest', description: 'Resultados públicos', id: p + 'endpoints search pinterest fondos anime' },
+          { title: 'Buscar stickers', description: 'Buscar stickers en Giphy', id: p + 'endpoints search stickers gatos' },
           { title: 'Descargar Pinterest', description: 'Pega una URL con el comando', id: p + 'endpoints ayuda' },
           { title: 'Convertir imagen a sticker', description: 'Responde a una imagen con el comando', id: p + 'endpoints ayuda' },
         ],
@@ -118,6 +125,7 @@ export default async function endpoints({ sock, chatId, msg, args, config }) {
   try {
     if (['menu', 'ayuda', 'help'].includes(action)) return enviarMenu(sock, chatId, msg, config)
     if (['search', 'busqueda'].includes(action) && !rest.length) return enviarMenu(sock, chatId, msg, config, 'search')
+    if (action === 'search2' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'search2')
     if (action === 'tools' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'tools')
     if (action === 'media' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'media')
 
@@ -127,9 +135,7 @@ export default async function endpoints({ sock, chatId, msg, args, config }) {
       if (!SEARCH_KINDS.includes(kind)) throw new Error('Tipo no válido. Usa: ' + SEARCH_KINDS.join(', '))
       const query = queryParts.join(' ').trim()
       if (!query) throw new Error('Uso: ' + p + 'endpoints search ' + kind + ' <texto>')
-      const route = kind === 'pinterest' || kind === 'youtube'
-        ? '/api/v1/search/' + kind
-        : '/api/v1/search/' + kind
+      const route = kind === 'stickers' ? '/api/v1/sticker/search' : '/api/v1/search/' + kind
       const result = await yuiapiRequest(yuiapiQuery(route, { q: query, limit: 5, lang: kind === 'wiki' ? 'es' : undefined }))
       const items = result.data?.results || []
       if (!items.length) return sock.sendMessage(chatId, { text: '🔎 No hay resultados para: ' + query }, { quoted: msg })
@@ -137,27 +143,29 @@ export default async function endpoints({ sock, chatId, msg, args, config }) {
       const lines = items.slice(0, 5).map((item, i) => {
         const title = item.title || item.name || item.trackName || 'Resultado ' + (i + 1)
         const details = [item.channel, item.artist, item.creator, item.description, item.year, item.duration].filter(Boolean).join(' · ')
-        return (i + 1) + '. *' + String(title).slice(0, 140) + '*\\n' + String(details).slice(0, 180) + '\\n' + (item.url || item.page || '')
+        return (i + 1) + '. *' + String(title).slice(0, 140) + '*\n' + String(details).slice(0, 180) + '\n' + (item.url || item.page || '')
       })
       const first = items[0]
       await sock.sendMessage(chatId, {
-        text: '🔎 *YuiAPI · ' + SEARCH_LABELS[kind] + '*\\nConsulta: ' + query + '\\n\\n' + lines.join('\\n\\n'),
+        text: '🔎 *YuiAPI · ' + SEARCH_LABELS[kind] + '*\nConsulta: ' + query + '\n\n' + lines.join('\n\n'),
         footer: 'Resultados: ' + items.length,
         buttons: kind === 'youtube' ? [
           { text: '▶️ Abrir menú de descargas', id: p + 'yts ' + query },
         ] : undefined,
       }, { quoted: msg })
-      const preview = first?.thumbnail || first?.image || first?.cover
-      if (preview && /^https:\\/\\//i.test(preview)) {
-        await sock.sendMessage(chatId, { image: { url: preview }, caption: first.title || 'Vista previa' }).catch(() => {})
-      }
+      const preview = first?.thumbnail || first?.image || first?.cover || first?.webp
+      try {
+        if (preview && new URL(preview).protocol === 'https:') {
+          await sock.sendMessage(chatId, { image: { url: preview }, caption: first.title || 'Vista previa' }).catch(() => {})
+        }
+      } catch {}
       return
     }
 
     if (action === 'weather' || action === 'clima') {
       if (!text) throw new Error('Uso: ' + p + 'endpoints weather <ciudad>')
       const result = await yuiapiRequest(yuiapiQuery('/api/v1/weather', { city: text, lang: 'es' }))
-      return sock.sendMessage(chatId, { text: '🌤️ *Clima · ' + text + '*\\n' + JSON.stringify(result.data, null, 2).slice(0, 3000) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '🌤️ *Clima · ' + text + '*\n' + JSON.stringify(result.data, null, 2).slice(0, 3000) }, { quoted: msg })
     }
 
     if (action === 'translate' || action === 'traducir') {
@@ -165,14 +173,14 @@ export default async function endpoints({ sock, chatId, msg, args, config }) {
       const phrase = parts.join(' ').trim()
       if (!to || !phrase) throw new Error('Uso: ' + p + 'endpoints translate <idioma destino> <texto>')
       const result = await yuiapiRequest(yuiapiQuery('/api/v1/translate', { text: phrase, to, from: 'auto' }))
-      return sock.sendMessage(chatId, { text: '🌐 *Traducción*\\n' + JSON.stringify(result.data, null, 2).slice(0, 3000) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '🌐 *Traducción*\n' + JSON.stringify(result.data, null, 2).slice(0, 3000) }, { quoted: msg })
     }
 
     if (action === 'exchange' || action === 'moneda') {
       const [from, to, amount = '1'] = rest
       if (!from || !to) throw new Error('Uso: ' + p + 'endpoints exchange USD PEN 10')
       const result = await yuiapiRequest(yuiapiQuery('/api/v1/exchange', { from, to, amount }))
-      return sock.sendMessage(chatId, { text: '💱 *Conversión de moneda*\\n' + JSON.stringify(result.data, null, 2).slice(0, 2500) }, { quoted: msg })
+      return sock.sendMessage(chatId, { text: '💱 *Conversión de moneda*\n' + JSON.stringify(result.data, null, 2).slice(0, 2500) }, { quoted: msg })
     }
 
     if (action === 'tool' || action === 'herramienta') {
