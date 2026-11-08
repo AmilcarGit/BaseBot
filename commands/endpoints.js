@@ -88,16 +88,10 @@ async function enviarMenu(sock, chatId, msg, config, categoria = 'principal') {
             { title: 'JSON', description: 'Validar JSON de ejemplo', id: p + 'endpoints tool json-validate {"ok":true}' },
             { title: 'URL Encode', description: 'Codificar una URL', id: p + 'endpoints tool url-encode hola mundo' },
             { title: 'URL Decode', description: 'Decodificar una URL', id: p + 'endpoints tool url-decode hola%20mundo' },
-            { title: 'Clima', description: 'Consultar clima de Lima', id: p + 'endpoints weather Lima' },
-            { title: 'Traductor', description: 'Traducir hola al inglés', id: p + 'endpoints translate en hola' },
-            { title: 'Tipo de cambio', description: 'Convertir 10 USD a PEN', id: p + 'endpoints exchange USD PEN 10' },
+
           ],
         }],
-      }],
-    }, { quoted: msg })
-  }
-
-  return sock.sendMessage(chatId, {
+      },\n        { text: '🌐 Servicios', id: p + 'endpoints services' },\n      ],\n    }, { quoted: msg })\n  }\n\n  if (categoria === 'services') {\n    return sock.sendMessage(chatId, {\n      text: '🌐 *Servicios externos*\\nClima, traducción y conversión de divisas.',\n      footer: 'YuiAPI Utilities',\n      buttons: [{ text: 'Servicios', sections: [{ title: 'Servicios', rows: [\n        { title: 'Clima · Lima', description: 'Consultar condiciones actuales', id: p + 'endpoints weather Lima' },\n        { title: 'Traducir · Hola', description: 'Traducir al inglés', id: p + 'endpoints translate en hola' },\n        { title: 'USD a PEN', description: 'Convertir 10 dólares a soles', id: p + 'endpoints exchange USD PEN 10' },\n      ] }] }],\n    }, { quoted: msg })\n  }\n\n  return sock.sendMessage(chatId, {
     text: '📦 *Multimedia YuiAPI*\nUsa los botones para iniciar pruebas de búsqueda o descarga.',
     footer: 'YuiAPI Media',
     buttons: [{
@@ -126,7 +120,7 @@ export default async function endpoints({ sock, chatId, msg, args, config }) {
     if (['menu', 'ayuda', 'help'].includes(action)) return enviarMenu(sock, chatId, msg, config)
     if (['search', 'busqueda'].includes(action) && !rest.length) return enviarMenu(sock, chatId, msg, config, 'search')
     if (action === 'search2' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'search2')
-    if (action === 'tools' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'tools')
+    if (action === 'tools' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'tools')\n    if (action === 'services' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'services')
     if (action === 'media' && !rest.length) return enviarMenu(sock, chatId, msg, config, 'media')
 
     if (action === 'search' || action === 'buscar') {
