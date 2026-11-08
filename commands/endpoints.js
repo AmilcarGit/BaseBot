@@ -237,7 +237,7 @@ export default async function endpoints({ sock, chatId, msg, args, config }) {
     if (action === 'me') {
       const result = await yuiapiRequest('/api/v1/me')
       return sock.sendMessage(chatId, {
-        text: '👤 *Cuenta YuiAPI*\\n' + JSON.stringify(result.data, null, 2).slice(0, 2500),
+        text: '👤 *Cuenta YuiAPI*\n' + JSON.stringify(result.data, null, 2).slice(0, 2500),
       }, { quoted: msg })
     }
 
