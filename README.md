@@ -202,6 +202,24 @@ BaseBot limita los archivos descargados a 45 MB para evitar agotar la memoria de
 
 ---
 
+### Panel interactivo de YuiAPI
+
+Ejecuta `.endpoints` para abrir el menú de botones. Incluye las búsquedas de YouTube, Pinterest, Giphy, anime, música, libros, Wikipedia, imágenes, series, personajes, países, artículos científicos y libros públicos; además de clima, traducción, conversión de moneda, herramientas, stickers y descargas.
+
+Comandos principales:
+- `.endpoints search <tipo> <consulta>`
+- `.endpoints weather <ciudad>`
+- `.endpoints translate <idioma> <texto>`
+- `.endpoints exchange <origen> <destino> <cantidad>`
+- `.endpoints sticker-text <texto>`
+- Responde a una imagen con `.endpoints sticker` o `.endpoints remove-bg`.
+- `.endpoints pinterest <URL>` descarga un Pin público.
+- `.yts <consulta>` busca en YouTube; el desplegable permite descargar audio o video.
+
+BaseBot limita las descargas a 45 MB para proteger la memoria de Termux. El video se solicita en 720p. Los endpoints protegidos requieren `YUIAPI_KEY` en el archivo local `.env`; no publiques esa clave.
+
+---
+
 ## 🧾 Comandos incluidos
 
 | Comando | Descripción |
