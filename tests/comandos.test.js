@@ -134,6 +134,14 @@ function crearSock(resultados = {}) {
       sock.sendMessage(jid, { poll: { name, values, selectableCount: 1, ...poll } }, opciones),
     sendCarousel: (jid, { cards, ...resto }, opciones) => sock.sendMessage(jid, { ...resto, carousel: cards }, opciones),
     awaitReply: async () => ({ key: { remoteJid: GRUPO, id: 'R1' }, message: { conversation: 'Amilcar' } }),
+    health: async () => ({ state: 'open', latencyMs: 87, reconnects: 1, queueSize: 0, pingError: undefined }),
+    getStats: () => ({ sent: 5, received: 9, failed: 1 }),
+    getAdmins: async () => [
+      { id: '269715926691844@lid', phoneNumber: '51910227479@s.whatsapp.net', admin: 'superadmin' },
+      { id: '999000111@lid', admin: 'admin' },
+    ],
+    isAdmin: async () => true,
+    isBotAdmin: async () => false,
     downloadMedia: async () => Buffer.alloc(2048),
     queue: { size: 0, clear: () => 0 },
   }
@@ -706,4 +714,28 @@ test('registrarRespuestas registra los botones y no falla con una librería viej
   assert.ok(registros[1].matcher.test('carrusel_rosa'))
 
   registrarRespuestas({}) // sin onButton: no hace nada
+})
+
+test('.ping muestra la latencia real medida por sock.health, y .admins lista admins con números y LID', async () => {
+  const ping = await ejecutar('ping')
+  assert.match(ping.textos, /Latencia con WhatsApp: \*87 ms\*/)
+
+  const admins = await ejecutar('admins', '', { grupo: true })
+  assert.match(admins.textos, /Admins del grupo\* \(2\)/)
+  assert.match(admins.textos, /@51910227479 👑/)
+  assert.match(admins.textos, /Tú: \*admin\*/)
+  assert.match(admins.textos, /El bot: \*miembro\*/)
+  assert.deepEqual(admins.enviados[0].contenido.mentions, ['51910227479@s.whatsapp.net', '999000111@lid'])
+
+  const privado = await ejecutar('admins')
+  assert.match(privado.textos, /solo funciona en grupos/)
+})
+
+test('.stats agrega los contadores reales de la librería', async () => {
+  const { sock, enviados } = crearSock()
+  const mod = await import('../commands/stats.js')
+  await mod.default({ sock, chatId: GRUPO, db: { data: { users: {}, stats: {} } }, comandos: CATALOGO })
+  assert.match(enviados[0].contenido.text, /Mensajes recibidos: 9/)
+  assert.match(enviados[0].contenido.text, /Mensajes enviados: 5 \(1 con error\)/)
+  assert.match(enviados[0].contenido.text, /Reconexiones: 1/)
 })

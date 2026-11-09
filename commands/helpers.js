@@ -17,7 +17,8 @@ const AYUDA = (p) => `🧰 *${p}helpers* — helpers integrados de Yui-Bails
 ▢ *carrusel* — tarjetas deslizables con imagen y botones (sock.sendCarousel)
 ▢ *unavez* — botones que solo cuentan el primer toque (onButton once)
 ▢ *preguntar* — el bot te pregunta y espera tu respuesta (awaitReply)
-▢ *ia* — mensaje con el icono de IA (ai: true)`
+▢ *ia* — mensaje con el icono de IA (ai: true)
+▢ *entrega* — manda un mensaje y espera a ver si se entrega y se lee (message.status)`
 
 export default async function helpers({ sock, chatId, msg, args, config, esDueno }) {
   const p = config.prefijo
@@ -152,6 +153,19 @@ export default async function helpers({ sock, chatId, msg, args, config, esDueno
 
     const nombre = respuesta.message?.conversation || respuesta.message?.extendedTextMessage?.text || 'amigo'
     return sock.reply(respuesta, `👋 Mucho gusto, *${nombre}*.`)
+  }
+
+  if (accion === 'entrega') {
+    const enviado = await sock.sendMessage(chatId, { text: '📬 Mensaje de prueba de entrega' }, { quoted: msg })
+    const vistos = new Set()
+    const alEstado = ({ key, status }) => {
+      if (key.id !== enviado.key.id || vistos.has(status)) return
+      vistos.add(status)
+      sock.reply(msg, `📬 Estado del mensaje de prueba: *${status}*`).catch(() => {})
+    }
+    sock.ev.on('message.status', alEstado)
+    setTimeout(() => sock.ev.off('message.status', alEstado), 60_000)
+    return
   }
 
   if (accion === 'ia') {

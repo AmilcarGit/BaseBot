@@ -12,6 +12,17 @@ export default async function stats({ sock, chatId, db, comandos }) {
   const usuarios = Object.keys(db.data.users || {}).length
   const comandosEjecutados = db.data.stats?.comandosEjecutados || 0
 
+  // Datos medidos por Yui-Bails (si la versión instalada los trae)
+  const reales = typeof sock.getStats === 'function' ? sock.getStats() : null
+  const salud = typeof sock.health === 'function' ? await sock.health({ ping: false }) : null
+  const extra = reales
+    ? `
+📨 Mensajes recibidos: ${reales.received}
+📤 Mensajes enviados: ${reales.sent}${reales.failed ? ` (${reales.failed} con error)` : ''}
+🔁 Reconexiones: ${salud?.reconnects ?? 0}
+⏳ En cola anti-ban: ${salud?.queueSize ?? 0}`
+    : ''
+
   const texto = `📊 *Estadísticas del bot*
 
 ⏱️ Uptime: ${horas}h ${minutos}m ${segundos}s
@@ -19,7 +30,7 @@ export default async function stats({ sock, chatId, db, comandos }) {
 🧩 Comandos cargados: ${comandos.length}
 ▶️ Comandos ejecutados: ${comandosEjecutados}
 👥 Usuarios registrados: ${usuarios}
-🖥️ Node.js: ${process.version}`
+🖥️ Node.js: ${process.version}${extra}`
 
   await sock.sendMessage(chatId, { text: texto })
 }
