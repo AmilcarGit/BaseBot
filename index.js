@@ -3,6 +3,7 @@ import makeWASocket, {
   DisconnectReason,
   makeCacheableSignalKeyStore,
 } from 'yui-bails'
+import * as Yui from 'yui-bails'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -16,6 +17,12 @@ import { guardarMensaje, marcarEnviado, obtenerMensaje } from './lib/store.js'
 import { procesarVotos } from './lib/votos.js'
 
 const logger = pino({ level: process.env.LOG_LEVEL || 'warn' })
+
+/** Logger de Yui-Bails: legible y en español si la versión instalada lo trae (y config.logs.bonitos lo permite). */
+const loggerYui =
+  config.logs?.bonitos !== false && typeof Yui.makePrettyLogger === 'function'
+    ? Yui.makePrettyLogger({ level: process.env.LOG_LEVEL || 'warn' })
+    : logger
 
 /** Opciones de la cola anti-ban a partir de config.antiBan (false = sin cola). */
 function colaAntiBan() {
@@ -59,7 +66,7 @@ async function iniciar() {
 
   // Yui-Bails consulta sola la versión vigente de WhatsApp Web en cada conexión
   const sock = makeWASocket({
-    logger,
+    logger: loggerYui,
     printQRInTerminal: false,
     auth: {
       creds: state.creds,
@@ -70,6 +77,11 @@ async function iniciar() {
     getMessage: async (key) => obtenerMensaje(key),
     // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
     sendQueue: colaAntiBan(),
+    // una línea por mensaje y por cambio de conexión (solo en Yui-Bails 1.1.0 o más nueva)
+    prettyLogs: config.logs?.lineaPorMensaje !== false,
+    // marca los mensajes nuevos como leídos
+    autoRead: config.logs?.leerAutomatico ?? false,
+    ...(config.logs?.presencia ? { autoPresence: config.logs.presencia } : {}),
   })
 
   // Recuerda los ids de lo que envía el bot, para no confundirlo con comandos del número vinculado

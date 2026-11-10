@@ -37,6 +37,14 @@ export default {
   maxReconnectAttempts: 8,
   maxReconnectDelay: 5 * 60 * 1000,
 
+  // Logs y lectura automática (necesitan Yui-Bails 1.1.0 o más nueva; en una vieja se ignoran)
+  logs: {
+    bonitos: true, // errores de Yui-Bails en español y sin JSON
+    lineaPorMensaje: true, // una línea por mensaje recibido y por cambio de conexión
+    leerAutomatico: true, // marca como leídos (✔✔ azules) los mensajes nuevos
+    presencia: null, // 'available' = en línea | 'unavailable' = no se ve en línea | null = no tocar
+  },
+
   // Cola anti-ban de Yui-Bails: los mensajes salen uno a uno, con pausas aleatorias,
   // un límite por chat y "escribiendo…" antes de los textos. Pon activa: false para desactivarla.
   antiBan: {
