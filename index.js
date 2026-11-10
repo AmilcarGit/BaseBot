@@ -1,16 +1,12 @@
-import makeWASocket, {
-  useMultiFileAuthState,
-  DisconnectReason,
-  makeCacheableSignalKeyStore,
-} from 'yui-bails'
 import * as Yui from 'yui-bails'
-import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
+import fs from 'fs'
+import path from 'path'
 import readline from 'readline'
 import config from './config.js'
 import handler from './handler.js'
-import { delay, backoffDelay } from './lib/utils.js'
+import { delay } from './lib/utils.js'
 import { info, warn, error as logError } from './lib/logger.js'
 import { registrarRespuestas } from './lib/respuestas.js'
 import { guardarMensaje, marcarEnviado, obtenerMensaje } from './lib/store.js'
@@ -36,54 +32,88 @@ function colaAntiBan() {
     typing: a.escribiendo,
   }
 }
-let intentosReconexion = 0
-let codigoSolicitado = false
+/** ¿Esta carpeta de sesión ya tiene un número vinculado? */
+function estaVinculado() {
+  try {
+    const creds = JSON.parse(fs.readFileSync(path.join(config.sessionFolder, 'creds.json'), 'utf8'))
+    return creds.registered === true
+  } catch {
+    return false
+  }
+}
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-})
-const preguntar = (texto) =>
-  new Promise((resolve) => rl.question(texto, resolve))
+/** Pregunta el número ANTES de conectar: preguntar con el socket abierto hace que WhatsApp cierre por timeout. */
+async function pedirNumero() {
+  if (estaVinculado()) return undefined
+  if (config.numeroBot) return config.numeroBot
 
-async function iniciar() {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    config.sessionFolder
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+  const respuesta = await new Promise((resolve) =>
+    rl.question(chalk.green('Ingresa el número de WhatsApp del bot (con código de país, sin +): '), resolve)
   )
+  rl.close()
+  return respuesta
+}
 
-  // Pedimos el número ANTES de abrir el socket. Si se pide después de
-  // 'connecting', la espera por la respuesta del usuario hace que
-  // WhatsApp cierre la conexión por timeout (errores 408/428).
-  let numero = config.numeroBot
-  if (!state.creds.registered && !numero) {
-    numero = await preguntar(
-      chalk.green(
-        'Ingresa el número de WhatsApp del bot (con código de país, sin +): '
+/** Conecta el bot: Yui-Bails se encarga de la sesión, del código de vinculación y de reconectar. */
+async function iniciar() {
+  if (typeof Yui.connectBot !== 'function') {
+    logError(
+      chalk.red(
+        'Este bot necesita Yui-Bails 1.3.0 o más nueva. Actualiza con:\n  npm install yui-bails@npm:@yui-bails/yui-bails'
       )
     )
+    process.exit(1)
   }
-  if (numero) numero = numero.replace(/\D/g, '')
 
-  // Yui-Bails consulta sola la versión vigente de WhatsApp Web en cada conexión
-  const sock = makeWASocket({
-    logger: loggerYui,
-    printQRInTerminal: false,
-    auth: {
-      creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, logger),
-    },
-    browser: ['Ubuntu', 'Chrome', '20.0.04'],
-    // necesario para reintentos de envío y para descifrar los votos de las encuestas
-    getMessage: async (key) => obtenerMensaje(key),
-    // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
-    sendQueue: colaAntiBan(),
-    // una línea por mensaje y por cambio de conexión (solo en Yui-Bails 1.1.0 o más nueva)
-    prettyLogs: config.logs?.lineaPorMensaje !== false,
-    // marca los mensajes nuevos como leídos
-    autoRead: config.logs?.leerAutomatico ?? false,
-    ...(config.logs?.presencia ? { autoPresence: config.logs.presencia } : {}),
-  })
+  const numero = await pedirNumero()
 
+  try {
+    await Yui.connectBot({
+      authDir: config.sessionFolder,
+      number: numero,
+      // Yui-Bails consulta sola la versión vigente de WhatsApp Web en cada conexión
+      config: {
+        logger: loggerYui,
+        printQRInTerminal: false,
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+        // necesario para reintentos de envío y para descifrar los votos de las encuestas
+        getMessage: async (key) => obtenerMensaje(key),
+        // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
+        sendQueue: colaAntiBan(),
+        // una línea por mensaje y por cambio de conexión
+        prettyLogs: config.logs?.lineaPorMensaje !== false,
+        // marca los mensajes nuevos como leídos
+        autoRead: config.logs?.leerAutomatico ?? false,
+        ...(config.logs?.presencia ? { autoPresence: config.logs.presencia } : {}),
+      },
+      onCode: ({ formatted }) =>
+        info(
+          chalk.yellow('\n============================='),
+          chalk.cyan(`\nTu código de vinculación es: ${formatted}`),
+          chalk.yellow('\n=============================\n'),
+          '\nAbre WhatsApp > Dispositivos vinculados > Vincular con número de teléfono, e ingresa el código.'
+        ),
+      onOpen: () => info(chalk.green(`✔ ${config.nombreBot} conectado correctamente.`)),
+      onClose: ({ reason, willReconnect, message }) => {
+        if (reason === Yui.DisconnectReason.loggedOut) {
+          logError(chalk.red(`${message}\nVuelve a iniciar el bot para vincular de nuevo.`))
+          process.exit(1)
+        }
+        if (willReconnect) warn(chalk.yellow(`Conexión cerrada (${reason}). ${message}`))
+      },
+      onError: (err, message) => logError(chalk.red(message), err),
+      setup: configurarSocket,
+    })
+  } catch (err) {
+    // número mal escrito, carpeta de sesión insegura…
+    logError(chalk.red(err?.message || err))
+    process.exit(1)
+  }
+}
+
+/** Se ejecuta con cada socket nuevo (también al reconectar): engancha los comandos y eventos. */
+function configurarSocket(sock) {
   // Recuerda los ids de lo que envía el bot, para no confundirlo con comandos del número vinculado
   const enviarOriginal = sock.sendMessage
   sock.sendMessage = async (...args) => {
@@ -91,78 +121,6 @@ async function iniciar() {
     marcarEnviado(enviado?.key?.id)
     return enviado
   }
-
-  // --- Solicitud del código de vinculación ---
-  // Se dispara con el primer evento 'qr' (socket listo), con el número ya en mano.
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update
-
-    // WhatsApp envía el primer 'qr' cuando el socket ya está listo; pedir el código en
-    // 'connecting' (antes de que abra) provoca "Connection Closed" (428).
-    if (
-      qr &&
-      !sock.authState.creds.registered &&
-      !codigoSolicitado &&
-      numero
-    ) {
-      codigoSolicitado = true
-      await delay(500)
-
-      try {
-        const codigo = await sock.requestPairingCode(numero)
-        info(
-          chalk.yellow('\n============================='),
-          chalk.cyan(`\nTu código de vinculación es: ${codigo}`),
-          chalk.yellow('\n=============================\n'),
-          '\nAbre WhatsApp > Dispositivos vinculados > Vincular con número de teléfono, e ingresa el código.'
-        )
-      } catch (err) {
-        logError(chalk.red('Error al solicitar el código de vinculación:'), err)
-        codigoSolicitado = false
-      }
-    }
-
-    if (connection === 'open') {
-      intentosReconexion = 0
-      codigoSolicitado = false
-      info(chalk.green(`✔ ${config.nombreBot} conectado correctamente.`))
-    }
-
-    if (connection === 'close') {
-      const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
-      const isLoggedOut = statusCode === DisconnectReason.loggedOut
-
-      if (isLoggedOut) {
-        logError(
-          chalk.red(
-            'Sesión cerrada desde el teléfono. Elimina la carpeta de sesión y vuelve a vincular.'
-          )
-        )
-        return
-      }
-
-      // 401 u otros códigos: reintentar con backoff exponencial
-      if (intentosReconexion < config.maxReconnectAttempts) {
-        const espera = backoffDelay(intentosReconexion, config.maxReconnectDelay)
-        intentosReconexion++
-        warn(
-          chalk.yellow(
-            `Conexión cerrada (${statusCode}). Reintentando en ${Math.round(
-              espera / 1000
-            )}s (intento ${intentosReconexion}/${config.maxReconnectAttempts})...`
-          )
-        )
-        await delay(espera)
-        iniciar()
-      } else {
-        logError(
-          chalk.red('Se alcanzó el máximo de reintentos de reconexión. Deteniendo el bot.')
-        )
-      }
-    }
-  })
-
-  sock.ev.on('creds.update', saveCreds)
 
   // respuestas a botones con onButton (ver lib/respuestas.js)
   registrarRespuestas(sock)
@@ -235,7 +193,6 @@ async function iniciar() {
     )
   }
 
-  return sock
 }
 
 iniciar()

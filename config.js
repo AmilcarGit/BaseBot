@@ -33,9 +33,6 @@ export default {
   // Pausa ante error 429 (rate limit) en ms
   rateLimitPause: 90 * 1000,
 
-  // Reintentos máximos de reconexión y tope de espera
-  maxReconnectAttempts: 8,
-  maxReconnectDelay: 5 * 60 * 1000,
 
   // Logs y lectura automática (necesitan Yui-Bails 1.1.0 o más nueva; en una vieja se ignoran)
   logs: {

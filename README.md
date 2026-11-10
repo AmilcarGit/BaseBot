@@ -44,7 +44,7 @@
 | Característica | Descripción |
 |---|---|
 | 🔗 Vinculación por código | No requiere escanear QR, ideal para VPS/Termux sin pantalla |
-| 🔁 Reconexión automática | Backoff exponencial, hasta 8 intentos, tope de 5 min |
+| 🔁 Reconexión automática | La hace Yui-Bails (`connectBot`): espera creciente de 2 s hasta 30 s, sin límite de intentos |
 | 🚪 Manejo de sesión | Distingue cierre de sesión (`loggedOut`) de desconexión recuperable (`401`) |
 | ⚡ Caché de grupos | `groupMetadata` con TTL para no saturar la API de WhatsApp |
 | 🐢 Anti rate-limit | Pausa automática ante errores `429` |
@@ -127,8 +127,6 @@ Todo se controla desde `config.js`:
 | `sessionFolder` | Carpeta donde se guarda la sesión | `'./session'` |
 | `groupCacheTTL` | TTL del caché de grupos (ms) | `300000` |
 | `rateLimitPause` | Pausa ante error `429` (ms) | `3000` |
-| `maxReconnectAttempts` | Intentos máximos de reconexión | `8` |
-| `maxReconnectDelay` | Tope de espera entre reintentos (ms) | `300000` |
 
 ---
 
