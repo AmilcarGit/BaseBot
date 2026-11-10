@@ -670,7 +670,7 @@ test('.helpers: reaccion, botones, lista, encuesta y descarga', async () => {
 test('.helpers cola y ayuda', async () => {
   const cola = await ejecutar('helpers', 'cola')
   assert.match(cola.textos, /3 mensajes/)
-  const ayuda = await ejecutar('helpers', 'otra')
+  const ayuda = await ejecutar('helpers', 'zzz')
   assert.match(ayuda.textos, /helpers integrados/)
 })
 
@@ -722,7 +722,7 @@ test('.helpers confirmar, paginas, menu, solo y otra', async () => {
 
   const paginas = await ejecutar('helpers', 'paginas')
   assert.match(paginas.textos, /Elemento de prueba 1/)
-  assert.match(paginas.textos, /Página 1 de 5/)
+  assert.match(paginas.ultimo.footer, /Página 1 de 5/)
 
   const menu = await ejecutar('helpers', 'menu')
   assert.deepEqual(menu.ultimo.buttons[0].sections[0].rows.map((r) => r.title), ['🎮 Juegos', 'ℹ️ Info'])
