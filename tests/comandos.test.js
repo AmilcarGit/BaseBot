@@ -735,6 +735,21 @@ test('.helpers confirmar, paginas, menu, solo y otra', async () => {
   assert.match(otra.textos, /💬 /)
 })
 
+test('.helpers lab: botones experimentales uno a uno', async () => {
+  const uso = await ejecutar('helpers', 'lab')
+  assert.match(uso.textos, /Uso:/)
+
+  const uno = await ejecutar('helpers', 'lab ubicacion')
+  assert.equal(uno.enviados.length, 1)
+  assert.equal(uno.ultimo.buttons[0].name, 'send_location')
+
+  const todos = await ejecutar('helpers', 'lab todos')
+  assert.deepEqual(
+    todos.enviados.map((e) => e.contenido.buttons[0].name),
+    ['send_location', 'cta_reminder', 'cta_cancel_reminder', 'address_message', 'open_webview']
+  )
+})
+
 test('registrarRespuestas registra los botones y no falla con una librería vieja', () => {
   const registros = []
   registrarRespuestas({ onButton: (matcher, fn, opciones) => registros.push({ matcher, fn, opciones }), reply: async () => {} })

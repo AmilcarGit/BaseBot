@@ -1,3 +1,4 @@
+import * as Yui from 'yui-bails'
 import { obtenerMensajeCitado, tipoDeMedia } from '../lib/media.js'
 import { pngDegradado } from '../lib/pruebas.js'
 import { guardarMensaje, registrarEncuesta } from '../lib/store.js'
@@ -23,6 +24,7 @@ const AYUDA = (p) => `🧰 *${p}helpers* — helpers integrados de Yui-Bails
 ▢ *menu* — menú con submenús y botón Volver (sock.menu)
 ▢ *solo* — botón que solo puede tocar un admin (sock.sendGuardedButtons)
 ▢ *otra* — frase al azar con botón 🔁 para repetir (sock.sendRepeatable)
+▢ *lab* — prueba botones experimentales uno a uno: *ubicacion*, *recordatorio*, *cancelar*, *direccion*, *web* (o *todos*)
 ▢ *entrega* — manda un mensaje y espera a ver si se entrega y se lee (message.status)`
 
 export default async function helpers({ sock, chatId, msg, args, config, esDueno }) {
@@ -223,6 +225,28 @@ export default async function helpers({ sock, chatId, msg, args, config, esDueno
   if (accion === 'otra') {
     const frases = ['Hoy es un buen día para programar.', 'Si funciona, no lo toques. 😄', 'Un bug menos, un café más.', 'Commit pequeño, vida tranquila.']
     return sock.sendRepeatable(msg, () => `💬 ${frases[Math.floor(Math.random() * frases.length)]}`, { buttonText: '🔁 Otra frase' })
+  }
+
+  if (accion === 'lab') {
+    const botones = Yui.experimentalButtons
+    if (!botones) return sock.reply(msg, '⚠️ El laboratorio necesita Yui-Bails 1.3.0 o más nueva. Actualiza: `npm install yui-bails@npm:@yui-bails/yui-bails`')
+
+    const pruebas = {
+      ubicacion: ['send_location', botones.requestLocation()],
+      recordatorio: ['cta_reminder', botones.reminder()],
+      cancelar: ['cta_cancel_reminder', botones.cancelReminder()],
+      direccion: ['address_message', botones.address()],
+      web: ['open_webview', botones.webview('Yui-Bails', 'https://github.com/AmilcarGit/Yui-Bails')],
+    }
+    const eleccion = (args[1] || '').toLowerCase()
+    const nombres = eleccion === 'todos' ? Object.keys(pruebas) : pruebas[eleccion] ? [eleccion] : []
+    if (!nombres.length) return sock.reply(msg, `🧪 Uso: *${p}helpers lab* ${Object.keys(pruebas).join(' | ')} | todos\nCada uno se envía en un mensaje aparte. Cuéntame cuáles se ven y cuáles no.`)
+
+    for (const nombre of nombres) {
+      const [nativo, boton] = pruebas[nombre]
+      await sock.sendButtons(chatId, { text: `🧪 Prueba: *${nombre}* (\`${nativo}\`)\nSi no ves el botón, tu cuenta no lo soporta.`, footer: config.nombreBot, buttons: [boton] }, { quoted: msg })
+    }
+    return
   }
 
   if (accion === 'ia') {
