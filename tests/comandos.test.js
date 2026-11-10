@@ -133,6 +133,16 @@ function crearSock(resultados = {}) {
     sendPoll: (jid, name, values, poll = {}, opciones) =>
       sock.sendMessage(jid, { poll: { name, values, selectableCount: 1, ...poll } }, opciones),
     sendCarousel: (jid, { cards, ...resto }, opciones) => sock.sendMessage(jid, { ...resto, carousel: cards }, opciones),
+    confirm: async (m, texto) => {
+      await sock.sendMessage(m.key.remoteJid, { text: texto, buttons: [{ id: 'y', text: '✅ Sí' }, { id: 'n', text: '❌ No' }] }, { quoted: m })
+      return true
+    },
+    paginate: (m, items, { perPage = 5, title = '' } = {}) =>
+      sock.sendMessage(m.key.remoteJid, { text: `${title}\n${items.slice(0, perPage).join('\n')}`, footer: `Página 1 de ${Math.ceil(items.length / perPage)}` }, { quoted: m }),
+    menu: (m, { items, text }) =>
+      sock.sendMessage(m.key.remoteJid, { text, buttons: [{ text: 'Ver opciones', sections: [{ rows: items.map((i) => ({ title: i.title })) }] }] }, { quoted: m }),
+    sendGuardedButtons: (m, { who, ...resto }) => sock.sendMessage(m.key.remoteJid, { ...resto, who }, { quoted: m }),
+    sendRepeatable: async (m, fuente) => sock.sendMessage(m.key.remoteJid, { text: typeof fuente === 'function' ? await fuente() : fuente }, { quoted: m }),
     awaitReply: async () => ({ key: { remoteJid: GRUPO, id: 'R1' }, message: { conversation: 'Amilcar' } }),
     health: async () => ({ state: 'open', latencyMs: 87, reconnects: 1, queueSize: 0, pingError: undefined }),
     getStats: () => ({ sent: 5, received: 9, failed: 1 }),
@@ -703,6 +713,26 @@ test('.helpers unavez, preguntar e ia', async () => {
 
   const ia = await ejecutar('helpers', 'ia')
   assert.equal(ia.ultimo.ai, true)
+})
+
+test('.helpers confirmar, paginas, menu, solo y otra', async () => {
+  const confirmar = await ejecutar('helpers', 'confirmar')
+  assert.match(confirmar.textos, /¿Seguro que quieres continuar\?/)
+  assert.match(confirmar.textos, /Confirmado/)
+
+  const paginas = await ejecutar('helpers', 'paginas')
+  assert.match(paginas.textos, /Elemento de prueba 1/)
+  assert.match(paginas.textos, /Página 1 de 5/)
+
+  const menu = await ejecutar('helpers', 'menu')
+  assert.deepEqual(menu.ultimo.buttons[0].sections[0].rows.map((r) => r.title), ['🎮 Juegos', 'ℹ️ Info'])
+
+  const solo = await ejecutar('helpers', 'solo')
+  assert.equal(solo.ultimo.who, 'admins')
+  assert.equal(solo.ultimo.buttons[0].id, 'panel_admin')
+
+  const otra = await ejecutar('helpers', 'otra')
+  assert.match(otra.textos, /💬 /)
 })
 
 test('registrarRespuestas registra los botones y no falla con una librería vieja', () => {

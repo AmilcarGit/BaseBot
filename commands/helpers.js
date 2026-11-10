@@ -18,6 +18,11 @@ const AYUDA = (p) => `🧰 *${p}helpers* — helpers integrados de Yui-Bails
 ▢ *unavez* — botones que solo cuentan el primer toque (onButton once)
 ▢ *preguntar* — el bot te pregunta y espera tu respuesta (awaitReply)
 ▢ *ia* — mensaje con el icono de IA (ai: true)
+▢ *confirmar* — pregunta Sí/No con botones y espera tu respuesta (sock.confirm)
+▢ *paginas* — lista larga con botones Anterior / Siguiente (sock.paginate)
+▢ *menu* — menú con submenús y botón Volver (sock.menu)
+▢ *solo* — botón que solo puede tocar un admin (sock.sendGuardedButtons)
+▢ *otra* — frase al azar con botón 🔁 para repetir (sock.sendRepeatable)
 ▢ *entrega* — manda un mensaje y espera a ver si se entrega y se lee (message.status)`
 
 export default async function helpers({ sock, chatId, msg, args, config, esDueno }) {
@@ -166,6 +171,58 @@ export default async function helpers({ sock, chatId, msg, args, config, esDueno
     sock.ev.on('message.status', alEstado)
     setTimeout(() => sock.ev.off('message.status', alEstado), 60_000)
     return
+  }
+
+  if (['confirmar', 'paginas', 'menu', 'solo', 'otra'].includes(accion) && typeof sock.confirm !== 'function') {
+    return sock.reply(msg, '⚠️ Esta prueba necesita Yui-Bails 1.2.0 o más nueva. Actualiza: `npm install yui-bails@npm:@yui-bails/yui-bails`')
+  }
+
+  if (accion === 'confirmar') {
+    const ok = await sock.confirm(msg, '¿Seguro que quieres continuar? (30 segundos)')
+    return sock.reply(msg, ok ? '✅ Confirmado.' : '❌ Cancelado o sin respuesta.')
+  }
+
+  if (accion === 'paginas') {
+    const elementos = Array.from({ length: 23 }, (_, i) => `Elemento de prueba ${i + 1}`)
+    return sock.paginate(msg, elementos, { perPage: 5, title: '📄 *Lista de prueba*', footer: config.nombreBot })
+  }
+
+  if (accion === 'menu') {
+    return sock.menu(msg, {
+      title: `📋 Menú de ${config.nombreBot}`,
+      text: 'Elige una categoría:',
+      footer: 'Solo tú puedes tocar estas opciones',
+      items: [
+        {
+          title: '🎮 Juegos',
+          description: 'Dado y moneda',
+          items: [
+            { title: '🎲 Dado', run: ({ msg: toque }) => sock.reply(toque, `🎲 Salió el *${1 + Math.floor(Math.random() * 6)}*`) },
+            { title: '🪙 Moneda', run: ({ msg: toque }) => sock.reply(toque, `🪙 Salió *${Math.random() < 0.5 ? 'cara' : 'cruz'}*`) },
+          ],
+        },
+        { title: 'ℹ️ Info', description: 'Sobre el bot', text: `🤖 Soy *${config.nombreBot}*, hecho con Yui-Bails.` },
+      ],
+    })
+  }
+
+  if (accion === 'solo') {
+    return sock.sendGuardedButtons(
+      msg,
+      {
+        text: '🔒 Este botón solo lo puede tocar un *admin* del grupo (en privado, solo tú).',
+        footer: config.nombreBot,
+        buttons: [{ id: 'panel_admin', text: 'Abrir panel' }],
+        who: 'admins',
+        denied: '🚫 Solo los admins pueden usar este botón.',
+      },
+      ({ msg: toque }) => sock.reply(toque, '✅ Eres admin: aquí iría tu panel.')
+    )
+  }
+
+  if (accion === 'otra') {
+    const frases = ['Hoy es un buen día para programar.', 'Si funciona, no lo toques. 😄', 'Un bug menos, un café más.', 'Commit pequeño, vida tranquila.']
+    return sock.sendRepeatable(msg, () => `💬 ${frases[Math.floor(Math.random() * frases.length)]}`, { buttonText: '🔁 Otra frase' })
   }
 
   if (accion === 'ia') {

@@ -241,7 +241,7 @@ Estos comandos ejercitan las funciones de la librería. Escribe **`.pruebas`** p
 | `.botones` · `clasico` · `imagen` | Botones nativos (respuesta rápida, URL, llamar, copiar, desplegable), formato clásico y con imagen | todos |
 | `.lista` | Mensaje de lista (en grupos, desplegable) | todos |
 | `.encuesta [pregunta \| op1 \| op2]` · `multi` | Encuestas y **descifrado de votos** con recuento en vivo | todos |
-| `.helpers [yo \| reaccion \| botones \| lista \| encuesta \| descarga \| cola \| carrusel \| unavez \| preguntar \| ia]` · `.yo` | Helpers integrados: `getSender` (número + ID interno), `reply`, `react`, `sendButtons`, `sendList`, `sendPoll`, `downloadMedia` y la cola anti-ban | todos |
+| `.helpers [yo \| reaccion \| botones \| lista \| encuesta \| descarga \| cola \| carrusel \| unavez \| preguntar \| confirmar \| paginas \| menu \| solo \| otra \| ia]` · `.yo` | Helpers integrados: `getSender` (número + ID interno), `reply`, `react`, `sendButtons`, `sendList`, `sendPoll`, `downloadMedia` y la cola anti-ban | todos |
 | `.evento [nombre]` | Evento de calendario | todos |
 | `.ubicacion [lat lon nombre]` | Ubicación | todos |
 | `.contacto` | Tarjetas de contacto (vCard) | todos |
