@@ -13,7 +13,7 @@
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "amilcar-ai": "github:AmilcarGit/AMILCAR-AI",
-    "chalk": "^5.3.0",
+    "chalk": "^6.0.1",
     "jimp": "^1.6.0",
     "link-preview-js": "^3.0.0",
     "lowdb": "^7.0.1",
