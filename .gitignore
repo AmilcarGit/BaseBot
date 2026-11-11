@@ -9,3 +9,5 @@ logs/
 .env
 npm-debug.log*
 .DS_Store
+sesiones/
+recordatorios-*.json

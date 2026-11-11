@@ -24,6 +24,13 @@ export default {
   // Carpeta donde se guardará la sesión
   sessionFolder: './session',
 
+  // Varios números de WhatsApp a la vez. También se activa con `npm start -- --multi`.
+  // Cada número guarda su vinculación en ./sesiones/<id>/ y se administra con el comando .sesion
+  multisesion: {
+    activa: false,
+    carpeta: './sesiones',
+  },
+
   // Archivo donde se guarda la base de datos local (usuarios, chats, etc.)
   dbFile: './database.json',
 

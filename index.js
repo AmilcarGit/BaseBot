@@ -8,6 +8,7 @@ import config from './config.js'
 import handler from './handler.js'
 import { delay } from './lib/utils.js'
 import { info, warn, error as logError } from './lib/logger.js'
+import { fijarManager, formatearCodigo, modoMultisesion } from './lib/multisesion.js'
 import { registrarRespuestas } from './lib/respuestas.js'
 import { guardarMensaje, marcarEnviado, obtenerMensaje } from './lib/store.js'
 import { procesarVotos } from './lib/votos.js'
@@ -32,6 +33,73 @@ function colaAntiBan() {
     typing: a.escribiendo,
   }
 }
+/** Opciones del socket de Yui-Bails, iguales para una sesión o para varias. */
+function opcionesSocket(extra = {}) {
+  return {
+    logger: loggerYui,
+    printQRInTerminal: false,
+    browser: ['Ubuntu', 'Chrome', '20.0.04'],
+    // necesario para reintentos de envío y para descifrar los votos de las encuestas
+    getMessage: async (key) => obtenerMensaje(key),
+    // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
+    sendQueue: colaAntiBan(),
+    // una línea por mensaje y por cambio de conexión
+    prettyLogs: config.logs?.lineaPorMensaje !== false,
+    // marca los mensajes nuevos como leídos
+    autoRead: config.logs?.leerAutomatico ?? false,
+    ...(config.logs?.presencia ? { autoPresence: config.logs.presencia } : {}),
+    ...extra,
+  }
+}
+
+/** Modo multisesión: varios números en un solo proceso (ver el comando .sesion). */
+async function iniciarMulti() {
+  if (typeof Yui.makeSessionManager !== 'function') {
+    logError(chalk.red('El modo multisesión necesita Yui-Bails 1.4.0 o más nueva:\n  npm install yui-bails@npm:@yui-bails/yui-bails'))
+    process.exit(1)
+  }
+
+  const manager = Yui.makeSessionManager({
+    authDir: config.multisesion?.carpeta || './sesiones',
+    // cada sesión guarda sus propios recordatorios
+    config: (id) => opcionesSocket({ schedulerFile: `./recordatorios-${id}.json` }),
+    setup: configurarSocket,
+  })
+  fijarManager(manager)
+
+  manager.on('session.pairing-code', ({ id, code }) =>
+    info(
+      chalk.yellow('\n============================='),
+      chalk.cyan(`\nSesión "${id}" — código de vinculación: ${formatearCodigo(code)}`),
+      chalk.yellow('\n=============================\n'),
+      '\nAbre WhatsApp > Dispositivos vinculados > Vincular con número de teléfono, e ingresa el código.'
+    )
+  )
+  manager.on('session.open', ({ id, user }) => info(chalk.green(`✔ Sesión "${id}" conectada (${user?.id?.split(':')[0]?.split('@')[0] || '?'}).`)))
+  manager.on('session.close', ({ id, reason, willReconnect }) => {
+    if (willReconnect) warn(chalk.yellow(`Sesión "${id}": conexión cerrada (${reason}), reconectando…`))
+  })
+  manager.on('session.logged-out', ({ id }) =>
+    warn(chalk.red(`Sesión "${id}": WhatsApp cerró la sesión. Se borró su vinculación; agrégala de nuevo con .sesion agregar.`))
+  )
+  manager.on('session.error', ({ id, error }) => logError(chalk.red(`Sesión "${id}":`), error))
+
+  try {
+    const guardadas = await manager.saved()
+    if (guardadas.length) {
+      info(chalk.cyan(`Restaurando ${guardadas.length} sesión(es): ${guardadas.join(', ')}`))
+      await manager.startAll()
+    } else {
+      // primera vez: se vincula una sesión "principal"; las demás se agregan luego con .sesion agregar
+      const numero = config.numeroBot || (await preguntarNumero())
+      await manager.start('principal', { pairingNumber: numero })
+    }
+  } catch (err) {
+    logError(chalk.red(err?.message || err))
+    process.exit(1)
+  }
+}
+
 /** ¿Esta carpeta de sesión ya tiene un número vinculado? */
 function estaVinculado() {
   try {
@@ -46,7 +114,10 @@ function estaVinculado() {
 async function pedirNumero() {
   if (estaVinculado()) return undefined
   if (config.numeroBot) return config.numeroBot
+  return preguntarNumero()
+}
 
+async function preguntarNumero() {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
   const respuesta = await new Promise((resolve) =>
     rl.question(chalk.green('Ingresa el número de WhatsApp del bot (con código de país, sin +): '), resolve)
@@ -73,22 +144,7 @@ async function iniciar() {
       authDir: config.sessionFolder,
       number: numero,
       // Yui-Bails consulta sola la versión vigente de WhatsApp Web en cada conexión
-      config: {
-        logger: loggerYui,
-        printQRInTerminal: false,
-        browser: ['Ubuntu', 'Chrome', '20.0.04'],
-        // necesario para reintentos de envío y para descifrar los votos de las encuestas
-        getMessage: async (key) => obtenerMensaje(key),
-        // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
-        sendQueue: colaAntiBan(),
-        // recordatorios (.recordar): se guardan en este archivo y sobreviven a un reinicio
-        schedulerFile: './recordatorios.json',
-        // una línea por mensaje y por cambio de conexión
-        prettyLogs: config.logs?.lineaPorMensaje !== false,
-        // marca los mensajes nuevos como leídos
-        autoRead: config.logs?.leerAutomatico ?? false,
-        ...(config.logs?.presencia ? { autoPresence: config.logs.presencia } : {}),
-      },
+      config: opcionesSocket({ schedulerFile: './recordatorios.json' }),
       onCode: ({ formatted }) =>
         info(
           chalk.yellow('\n============================='),
@@ -197,4 +253,5 @@ function configurarSocket(sock) {
 
 }
 
-iniciar()
+if (modoMultisesion(config)) iniciarMulti()
+else iniciar()

@@ -229,11 +229,30 @@ BaseBot limita las descargas a 45 MB para proteger la memoria de Termux. El vide
 | `.encuestaimg Pregunta \| Gato https://…/gato.jpg \| Perro` | Encuesta con imágenes: fotos numeradas en álbum y luego la encuesta |
 | `.llamada 30m video Reunión` | Invitación de llamada programada (experimental) |
 | `.estadomencion @persona texto` · `todos texto` | Publica un estado que menciona gente (solo owner, experimental) |
+| `.sesion` · `agregar <id> <número>` · `parar` / `iniciar <id>` · `quitar <id> confirmar` | Administra varios números a la vez (solo owner; necesita el modo multisesión) |
 | `.ia <pregunta>` | Chatea con AMILCAR AI (motor local por defecto) |
 | `.autoia on/off` | Activa o desactiva la respuesta automática (solo owner) |
 | `.yuiapi ayuda` | Prueba los endpoints de YuiAPI desde WhatsApp (búsquedas, stickers, imágenes y herramientas) |
 
 ---
+
+## 📱 Varios números a la vez (multisesión)
+
+Por defecto el bot usa **un** número (carpeta `./session`). Para manejar varios en el mismo proceso:
+
+```bash
+npm start -- --multi          # o pon multisesion.activa: true en config.js
+```
+
+- Cada número guarda su vinculación en `./sesiones/<id>/` y se reconecta solo.
+- La primera vez te pide un número y crea la sesión `principal`. Al volver a iniciar, restaura todas las guardadas.
+- Desde WhatsApp, el owner administra las sesiones con `.sesion`:
+  - `.sesion` — lista las sesiones y su estado
+  - `.sesion agregar ventas 51900000001` — crea la sesión y te manda el código de vinculación por el chat
+  - `.sesion parar ventas` / `.sesion iniciar ventas`
+  - `.sesion quitar ventas confirmar` — cierra la sesión en WhatsApp y borra su vinculación
+- Los comandos, el menú y las pruebas funcionan igual en todas las sesiones. Cada una guarda sus recordatorios en `recordatorios-<id>.json`.
+- Necesita Yui-Bails 1.4.0 o más nueva.
 
 ## 🧪 Comandos de prueba de Yui-Bails
 

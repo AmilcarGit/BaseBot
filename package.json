@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "test": "node tests/autoreply.test.js && node tests/comandos.test.js && node tests/recordar.test.js && node tests/rich.test.js"
+    "test": "node tests/autoreply.test.js && node tests/comandos.test.js && node tests/recordar.test.js && node tests/rich.test.js && node tests/multisesion.test.js"
   },
   "author": "",
   "license": "MIT",
