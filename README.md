@@ -224,6 +224,7 @@ BaseBot limita las descargas a 45 MB para proteger la memoria de Termux. El vide
 |---|---|
 | `.menu` | Muestra la lista de comandos disponibles |
 | `.ping` | Muestra la latencia del bot |
+| `.recordar 10m texto` · `cada 2h texto` · `lista` · `cancelar <id>` | Recordatorios que te mencionan a la hora; se guardan en `recordatorios.json` y sobreviven a un reinicio (necesita Yui-Bails 1.3.0+) |
 | `.ia <pregunta>` | Chatea con AMILCAR AI (motor local por defecto) |
 | `.autoia on/off` | Activa o desactiva la respuesta automática (solo owner) |
 | `.yuiapi ayuda` | Prueba los endpoints de YuiAPI desde WhatsApp (búsquedas, stickers, imágenes y herramientas) |

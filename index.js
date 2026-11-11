@@ -81,6 +81,8 @@ async function iniciar() {
         getMessage: async (key) => obtenerMensaje(key),
         // cola anti-ban: envíos en serie con pausas, límite por chat y "escribiendo…" automático
         sendQueue: colaAntiBan(),
+        // recordatorios (.recordar): se guardan en este archivo y sobreviven a un reinicio
+        schedulerFile: './recordatorios.json',
         // una línea por mensaje y por cambio de conexión
         prettyLogs: config.logs?.lineaPorMensaje !== false,
         // marca los mensajes nuevos como leídos
