@@ -31,6 +31,11 @@ export default {
     carpeta: './sesiones',
   },
 
+  // Dónde guarda .respaldo las copias de la sesión (contienen las claves de tu cuenta: no las subas a GitHub)
+  respaldos: {
+    carpeta: './respaldos',
+  },
+
   // Archivo donde se guarda la base de datos local (usuarios, chats, etc.)
   dbFile: './database.json',
 

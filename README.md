@@ -228,6 +228,10 @@ BaseBot limita las descargas a 45 MB para proteger la memoria de Termux. El vide
 | `.quiz Pregunta \| *Correcta \| Otra` · `.quiz resultado` | Quiz con respuesta correcta y marcador de quién acertó (experimental, necesita Yui-Bails 1.4.0+) |
 | `.encuestaimg Pregunta \| Gato https://…/gato.jpg \| Perro` | Encuesta con imágenes: fotos numeradas en álbum y luego la encuesta |
 | `.llamada 30m video Reunión` | Invitación de llamada programada (experimental) |
+| `.html <b>Hola</b> <i>mundo</i>` | Convierte HTML sencillo al formato de WhatsApp (negrita, cursiva, listas, citas, código, tablas como filas). Sin texto manda un ejemplo. WhatsApp no tiene HTML: lo demás se descarta (necesita Yui-Bails 1.4.2+) |
+| `.encuestatiempo 10m Pregunta \| Opción 1 \| Opción 2` | Encuesta que se cierra sola y publica el resultado con los votos. Si el bot se reinicia antes, no se cierra (necesita Yui-Bails 1.4.2+) |
+| `.canal <enlace \| código \| id>` | Muestra nombre, seguidores, id (`…@newsletter`) y enlace de un canal de WhatsApp (necesita Yui-Bails 1.4.2+) |
+| `.respaldo` *(solo owner)* | Guarda una copia comprimida de la sesión en `./respaldos/`. **Nunca se envía por el chat**: contiene las claves de tu cuenta (necesita Yui-Bails 1.4.2+) |
 | `.estadomencion @persona texto` · `todos texto` | Publica un estado que menciona gente (solo owner, experimental) |
 | `.sesion` · `agregar <id> <número>` · `parar` / `iniciar <id>` · `quitar <id> confirmar` | Administra varios números a la vez (solo owner; necesita el modo multisesión) |
 | `.ia <pregunta>` | Chatea con AMILCAR AI (motor local por defecto) |
@@ -235,6 +239,18 @@ BaseBot limita las descargas a 45 MB para proteger la memoria de Termux. El vide
 | `.yuiapi ayuda` | Prueba los endpoints de YuiAPI desde WhatsApp (búsquedas, stickers, imágenes y herramientas) |
 
 ---
+
+## 💾 Copia de seguridad de la sesión
+
+`.respaldo` (solo owner) guarda tu sesión en un archivo `.ysb` dentro de `./respaldos/` (en multisesión, uno por número). El archivo **no se manda por el chat**: contiene las claves de tu cuenta y quien lo tenga puede usar tu WhatsApp. Está en el `.gitignore`; no lo subas a GitHub.
+
+Para restaurar, **con el bot apagado**:
+
+```bash
+node restaurar.js respaldos/sesion-2026-11-17T22-30-00.ysb
+```
+
+No reemplaza una sesión que ya exista: si quieres sustituirla, mueve o borra antes la carpeta `session/`. Necesita Yui-Bails 1.4.2 o más nueva.
 
 ## 📱 Varios números a la vez (multisesión)
 
