@@ -50,7 +50,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Instalar dependencias (compila Yui-Bails desde GitHub)
+      - name: Instalar dependencias (Yui-Bails desde npm)
         run: npm install --no-audit --no-fund
       - name: Comprobar que Yui-Bails exporta lo que usa el bot
         run: |
